@@ -128,10 +128,10 @@ export default function Bookings() {
               </div>
               
               <div className="p-4 border-t border-border/50 bg-slate-50/50 flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="outline" size="sm" className="h-9 px-3" onClick={() => setModalState({ isOpen: true, booking })}>
+                <Button variant="outline" className="h-9 px-3 text-xs" onClick={() => setModalState({ isOpen: true, booking })}>
                   <Edit2 className="w-4 h-4 mr-2" /> Edit
                 </Button>
-                <Button variant="destructive" size="sm" className="h-9 px-3" onClick={() => { if(confirm('Delete booking?')) deleteMutation.mutate({ id: booking.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() })}) }}>
+                <Button variant="destructive" className="h-9 px-3 text-xs" onClick={() => { if(confirm('Delete booking?')) deleteMutation.mutate({ id: booking.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() })}) }}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
