@@ -5,10 +5,21 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { cn, formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Briefcase, FileText, DollarSign, Users, CheckSquare, PhoneCall, CheckCircle2, Circle } from "lucide-react";
+import { Briefcase, FileText, DollarSign, Users, CheckSquare, PhoneCall, CheckCircle2, Circle, Plus, CalendarDays, Receipt, ClipboardList } from "lucide-react";
+import { useLocation } from "wouter";
 const bgImage = `${import.meta.env.BASE_URL}images/dashboard-bg.png`;
 
+const quickActions = [
+  { label: "New Booking", icon: CalendarDays, href: "/bookings", color: "bg-blue-500" },
+  { label: "Add Invoice", icon: FileText, href: "/invoices", color: "bg-amber-500" },
+  { label: "Log Expense", icon: DollarSign, href: "/expenses", color: "bg-rose-500" },
+  { label: "Add Task", icon: ClipboardList, href: "/todos", color: "bg-emerald-500" },
+  { label: "New Receipt", icon: Receipt, href: "/receipts", color: "bg-teal-500" },
+  { label: "Add Follow-Up", icon: PhoneCall, href: "/followups", color: "bg-violet-500" },
+];
+
 export default function Dashboard() {
+  const [, navigate] = useLocation();
   const queryClient = useQueryClient();
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: checklist, isLoading: checklistLoading } = useListChecklistItems();
@@ -60,6 +71,22 @@ export default function Dashboard() {
             Here's what's happening with your business today. Keep track of jobs, staff, and finances all in one place.
           </p>
         </div>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 animate-fade-in stagger-1">
+        {quickActions.map(action => (
+          <button
+            key={action.label}
+            onClick={() => navigate(action.href)}
+            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-border/60 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 group"
+          >
+            <div className={cn("p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform", action.color)}>
+              <action.icon className="w-5 h-5" />
+            </div>
+            <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{action.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Stats Grid */}
