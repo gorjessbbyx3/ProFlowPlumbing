@@ -6,7 +6,7 @@ import {
   Clock, CheckSquare, PhoneCall, Megaphone, LineChart,
   Menu, X
 } from "lucide-react";
-import logo from "@assets/Untitled_1773437481822.png";
+import logo from "@assets/Untitled-1_1773440534890.png";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -46,7 +46,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}>
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="808 All Purpose Cleaners" className="h-12 w-12 object-contain rounded-lg shadow-sm bg-primary/5 p-1" />
+            <img src={logo} alt="808 All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
             <div>
               <h1 className="font-display font-bold text-primary leading-tight text-lg">808 All Purpose</h1>
               <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Cleaners</p>
@@ -91,7 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Top Header (Mobile mainly) */}
         <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center px-4 justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="h-8 w-8 object-contain" />
+            <img src={logo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain rounded" />
             <span className="font-display font-bold text-primary">808 Cleaners</span>
           </div>
           <button onClick={() => setMobileMenuOpen(true)} className="p-2 -mr-2 rounded-xl text-slate-500 hover:bg-slate-100">
