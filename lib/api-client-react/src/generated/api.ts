@@ -58,6 +58,7 @@ import type {
   UpdateFollowupBody,
   UpdateInvoiceBody,
   UpdateLaborEntryBody,
+  UpdateReceiptBody,
   UpdateShiftBody,
   UpdateTodoBody,
 } from "./api.schemas";
@@ -2366,6 +2367,93 @@ export const useCreateReceipt = <
   TContext
 > => {
   return useMutation(getCreateReceiptMutationOptions(options));
+};
+
+/**
+ * @summary Update a receipt
+ */
+export const getUpdateReceiptUrl = (id: number) => {
+  return `/api/receipts/${id}`;
+};
+
+export const updateReceipt = async (
+  id: number,
+  updateReceiptBody: UpdateReceiptBody,
+  options?: RequestInit,
+): Promise<Receipt> => {
+  return customFetch<Receipt>(getUpdateReceiptUrl(id), {
+    ...options,
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateReceiptBody),
+  });
+};
+
+export const getUpdateReceiptMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateReceipt>>,
+    TError,
+    { id: number; data: BodyType<UpdateReceiptBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateReceipt>>,
+  TError,
+  { id: number; data: BodyType<UpdateReceiptBody> },
+  TContext
+> => {
+  const mutationKey = ["updateReceipt"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateReceipt>>,
+    { id: number; data: BodyType<UpdateReceiptBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return updateReceipt(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateReceiptMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateReceipt>>
+>;
+export type UpdateReceiptMutationBody = BodyType<UpdateReceiptBody>;
+export type UpdateReceiptMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update a receipt
+ */
+export const useUpdateReceipt = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateReceipt>>,
+    TError,
+    { id: number; data: BodyType<UpdateReceiptBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateReceipt>>,
+  TError,
+  { id: number; data: BodyType<UpdateReceiptBody> },
+  TContext
+> => {
+  return useMutation(getUpdateReceiptMutationOptions(options));
 };
 
 /**

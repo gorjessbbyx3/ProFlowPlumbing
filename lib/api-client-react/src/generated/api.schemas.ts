@@ -241,6 +241,14 @@ export interface CreateReceiptBody {
   notes?: string;
 }
 
+export interface UpdateReceiptBody {
+  invoiceId?: number;
+  amount?: string;
+  paymentMethod?: string;
+  paymentDate?: string;
+  notes?: string;
+}
+
 export interface Expense {
   id: number;
   category: string;

@@ -6,12 +6,15 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency, getStatusColor } from "@/lib/utils";
-import { Plus, Trash2, X, Megaphone } from "lucide-react";
+import { Plus, Trash2, X, Megaphone, Pencil } from "lucide-react";
 
 type CampaignItem = ListCampaignsQueryResult[number];
 
 const TYPES = ["Flyer", "Social Media", "Email", "Promotion", "Outreach", "Referral", "Other"];
 const STATUSES = ["planned", "active", "completed"];
+
+type FormState = { name: string; type: string; status: string; startDate: string; endDate: string; budget: string; targetAudience: string; description: string; notes: string };
+const emptyForm: FormState = { name: "", type: "Flyer", status: "planned", startDate: "", endDate: "", budget: "", targetAudience: "", description: "", notes: "" };
 
 export default function Campaigns() {
   const queryClient = useQueryClient();
@@ -20,20 +23,57 @@ export default function Campaigns() {
   const updateCampaign = useUpdateCampaign();
   const deleteCampaign = useDeleteCampaign();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ name: "", type: "Flyer", status: "planned", startDate: "", endDate: "", budget: "", targetAudience: "", description: "", notes: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (c: CampaignItem) => {
+    setEditingId(c.id);
+    setForm({
+      name: c.name,
+      type: c.type,
+      status: c.status,
+      startDate: c.startDate ?? "",
+      endDate: c.endDate ?? "",
+      budget: c.budget ?? "",
+      targetAudience: c.targetAudience ?? "",
+      description: c.description ?? "",
+      notes: c.notes ?? "",
+    });
+    setShowForm(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createCampaign.mutate(
-      { data: { name: form.name, type: form.type, status: form.status || undefined, startDate: form.startDate || undefined, endDate: form.endDate || undefined, budget: form.budget || undefined, targetAudience: form.targetAudience || undefined, description: form.description || undefined, notes: form.notes || undefined } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListCampaignsQueryKey() });
-          setShowForm(false);
-          setForm({ name: "", type: "Flyer", status: "planned", startDate: "", endDate: "", budget: "", targetAudience: "", description: "", notes: "" });
-        },
-      }
-    );
+    const payload = {
+      name: form.name,
+      type: form.type,
+      status: form.status || undefined,
+      startDate: form.startDate || undefined,
+      endDate: form.endDate || undefined,
+      budget: form.budget || undefined,
+      targetAudience: form.targetAudience || undefined,
+      description: form.description || undefined,
+      notes: form.notes || undefined,
+    };
+
+    const onSuccess = () => {
+      queryClient.invalidateQueries({ queryKey: getListCampaignsQueryKey() });
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    };
+
+    if (editingId) {
+      updateCampaign.mutate({ id: editingId, data: payload }, { onSuccess });
+    } else {
+      createCampaign.mutate({ data: payload }, { onSuccess });
+    }
   };
 
   const handleStatusChange = (id: number, status: string) => {
@@ -48,13 +88,13 @@ export default function Campaigns() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Campaign Manager" subtitle="Plan and track marketing campaigns" action={<button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Campaign</button>} />
+      <PageHeader title="Campaign Manager" subtitle="Plan and track marketing campaigns" action={<button onClick={openCreate} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Campaign</button>} />
 
       {showForm && (
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg">New Campaign</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            <h3 className="font-semibold text-lg">{editingId ? "Edit Campaign" : "New Campaign"}</h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }}><X className="w-5 h-5" /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -98,7 +138,7 @@ export default function Campaigns() {
               <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full border rounded-lg px-3 py-2" rows={2} />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">Create Campaign</button>
+              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">{editingId ? "Update Campaign" : "Create Campaign"}</button>
             </div>
           </form>
         </Card>
@@ -136,6 +176,7 @@ export default function Campaigns() {
                     {STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                   </select>
                   <Badge className={getStatusColor(c.status)}>{c.status}</Badge>
+                  <button onClick={() => openEdit(c)} className="text-blue-500 hover:text-blue-700"><Pencil className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(c.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </div>

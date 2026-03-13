@@ -6,11 +6,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { getStatusColor } from "@/lib/utils";
-import { Plus, Trash2, X, PhoneCall } from "lucide-react";
+import { Plus, Trash2, X, PhoneCall, Pencil } from "lucide-react";
 
 type FollowupItem = ListFollowupsQueryResult[number];
 
 const STATUSES = ["pending", "contacted", "converted", "lost"];
+
+type FormState = { clientName: string; clientPhone: string; clientEmail: string; reason: string; dueDate: string; status: string; notes: string };
+const emptyForm: FormState = { clientName: "", clientPhone: "", clientEmail: "", reason: "", dueDate: "", status: "pending", notes: "" };
 
 export default function Followups() {
   const queryClient = useQueryClient();
@@ -19,20 +22,53 @@ export default function Followups() {
   const updateFollowup = useUpdateFollowup();
   const deleteFollowup = useDeleteFollowup();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ clientName: "", clientPhone: "", clientEmail: "", reason: "", dueDate: "", status: "pending", notes: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (f: FollowupItem) => {
+    setEditingId(f.id);
+    setForm({
+      clientName: f.clientName,
+      clientPhone: f.clientPhone ?? "",
+      clientEmail: f.clientEmail ?? "",
+      reason: f.reason,
+      dueDate: f.dueDate,
+      status: f.status,
+      notes: f.notes ?? "",
+    });
+    setShowForm(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createFollowup.mutate(
-      { data: { clientName: form.clientName, reason: form.reason, dueDate: form.dueDate, clientPhone: form.clientPhone || undefined, clientEmail: form.clientEmail || undefined, status: form.status || undefined, notes: form.notes || undefined } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListFollowupsQueryKey() });
-          setShowForm(false);
-          setForm({ clientName: "", clientPhone: "", clientEmail: "", reason: "", dueDate: "", status: "pending", notes: "" });
-        },
-      }
-    );
+    const payload = {
+      clientName: form.clientName,
+      reason: form.reason,
+      dueDate: form.dueDate,
+      clientPhone: form.clientPhone || undefined,
+      clientEmail: form.clientEmail || undefined,
+      status: form.status || undefined,
+      notes: form.notes || undefined,
+    };
+
+    const onSuccess = () => {
+      queryClient.invalidateQueries({ queryKey: getListFollowupsQueryKey() });
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    };
+
+    if (editingId) {
+      updateFollowup.mutate({ id: editingId, data: payload }, { onSuccess });
+    } else {
+      createFollowup.mutate({ data: payload }, { onSuccess });
+    }
   };
 
   const handleStatusChange = (id: number, status: string) => {
@@ -47,13 +83,13 @@ export default function Followups() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Follow-Ups" subtitle="Track client & lead follow-ups" action={<button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Follow-Up</button>} />
+      <PageHeader title="Follow-Ups" subtitle="Track client & lead follow-ups" action={<button onClick={openCreate} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Follow-Up</button>} />
 
       {showForm && (
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg">New Follow-Up</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            <h3 className="font-semibold text-lg">{editingId ? "Edit Follow-Up" : "New Follow-Up"}</h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }}><X className="w-5 h-5" /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -87,7 +123,7 @@ export default function Followups() {
               <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full border rounded-lg px-3 py-2" rows={2} />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">Save Follow-Up</button>
+              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">{editingId ? "Update Follow-Up" : "Save Follow-Up"}</button>
             </div>
           </form>
         </Card>
@@ -119,6 +155,7 @@ export default function Followups() {
                   {STATUSES.map(s => <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>)}
                 </select>
                 <Badge className={getStatusColor(f.status)}>{f.status}</Badge>
+                <button onClick={() => openEdit(f)} className="text-blue-500 hover:text-blue-700"><Pencil className="w-4 h-4" /></button>
                 <button onClick={() => handleDelete(f.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
               </div>
             </Card>

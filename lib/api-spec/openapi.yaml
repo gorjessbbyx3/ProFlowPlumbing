@@ -478,6 +478,25 @@ paths:
                 $ref: "#/components/schemas/Receipt"
 
   /receipts/{id}:
+    put:
+      operationId: updateReceipt
+      tags: [receipts]
+      summary: Update a receipt
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateReceiptBody"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Receipt"
     delete:
       operationId: deleteReceipt
       tags: [receipts]
@@ -1286,6 +1305,20 @@ components:
         notes:
           type: string
       required: [amount, paymentMethod, paymentDate]
+
+    UpdateReceiptBody:
+      type: object
+      properties:
+        invoiceId:
+          type: integer
+        amount:
+          type: string
+        paymentMethod:
+          type: string
+        paymentDate:
+          type: string
+        notes:
+          type: string
 
     Expense:
       type: object

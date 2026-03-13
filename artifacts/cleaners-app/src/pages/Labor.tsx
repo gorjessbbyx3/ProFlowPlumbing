@@ -1,15 +1,18 @@
 import React, { useState } from "react";
-import { useListLaborEntries, useCreateLaborEntry, useDeleteLaborEntry, useListEmployees } from "@workspace/api-client-react";
+import { useListLaborEntries, useCreateLaborEntry, useUpdateLaborEntry, useDeleteLaborEntry, useListEmployees } from "@workspace/api-client-react";
 import type { ListLaborEntriesQueryResult, ListEmployeesQueryResult } from "@workspace/api-client-react";
 import { getListLaborEntriesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Trash2, X, Clock } from "lucide-react";
+import { Plus, Trash2, X, Clock, Pencil } from "lucide-react";
 
 type LaborItem = ListLaborEntriesQueryResult[number];
 type EmployeeItem = ListEmployeesQueryResult[number];
+
+type FormState = { employeeId: string; bookingId: string; date: string; hoursWorked: string; hourlyRate: string; totalPay: string; description: string };
+const emptyForm: FormState = { employeeId: "", bookingId: "", date: "", hoursWorked: "", hourlyRate: "", totalPay: "", description: "" };
 
 export default function Labor() {
   const queryClient = useQueryClient();
@@ -19,9 +22,11 @@ export default function Labor() {
   const { data: entries, isLoading } = useListLaborEntries({ employeeId: filterEmployee ? parseInt(filterEmployee) : undefined, startDate: startDate || undefined, endDate: endDate || undefined });
   const { data: employees } = useListEmployees();
   const createEntry = useCreateLaborEntry();
+  const updateEntry = useUpdateLaborEntry();
   const deleteEntry = useDeleteLaborEntry();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ employeeId: "", bookingId: "", date: "", hoursWorked: "", hourlyRate: "", totalPay: "", description: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
 
   const calcTotal = (hours: string, rate: string) => {
     const h = parseFloat(hours) || 0;
@@ -29,19 +34,51 @@ export default function Labor() {
     return (h * r).toFixed(2);
   };
 
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (entry: LaborItem) => {
+    setEditingId(entry.id);
+    setForm({
+      employeeId: entry.employeeId.toString(),
+      bookingId: entry.bookingId?.toString() ?? "",
+      date: entry.date,
+      hoursWorked: entry.hoursWorked,
+      hourlyRate: entry.hourlyRate,
+      totalPay: entry.totalPay,
+      description: entry.description ?? "",
+    });
+    setShowForm(true);
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const totalPay = form.totalPay || calcTotal(form.hoursWorked, form.hourlyRate);
-    createEntry.mutate(
-      { data: { employeeId: parseInt(form.employeeId), bookingId: form.bookingId ? parseInt(form.bookingId) : undefined, date: form.date, hoursWorked: form.hoursWorked, hourlyRate: form.hourlyRate, totalPay, description: form.description || undefined } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListLaborEntriesQueryKey() });
-          setShowForm(false);
-          setForm({ employeeId: "", bookingId: "", date: "", hoursWorked: "", hourlyRate: "", totalPay: "", description: "" });
-        },
-      }
-    );
+    const payload = {
+      employeeId: parseInt(form.employeeId),
+      bookingId: form.bookingId ? parseInt(form.bookingId) : undefined,
+      date: form.date,
+      hoursWorked: form.hoursWorked,
+      hourlyRate: form.hourlyRate,
+      totalPay,
+      description: form.description || undefined,
+    };
+
+    const onSuccess = () => {
+      queryClient.invalidateQueries({ queryKey: getListLaborEntriesQueryKey() });
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    };
+
+    if (editingId) {
+      updateEntry.mutate({ id: editingId, data: payload }, { onSuccess });
+    } else {
+      createEntry.mutate({ data: payload }, { onSuccess });
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -55,7 +92,7 @@ export default function Labor() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Labor & Payroll" subtitle={`${totalHours.toFixed(1)} hours · ${formatCurrency(totalLabor)} total`} action={<button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> Log Hours</button>} />
+      <PageHeader title="Labor & Payroll" subtitle={`${totalHours.toFixed(1)} hours · ${formatCurrency(totalLabor)} total`} action={<button onClick={openCreate} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> Log Hours</button>} />
 
       <div className="flex flex-wrap gap-3">
         <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
@@ -69,8 +106,8 @@ export default function Labor() {
       {showForm && (
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg">Log Labor Hours</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            <h3 className="font-semibold text-lg">{editingId ? "Edit Labor Entry" : "Log Labor Hours"}</h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }}><X className="w-5 h-5" /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -105,7 +142,7 @@ export default function Labor() {
               <input type="text" value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} className="w-full border rounded-lg px-3 py-2" />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">Save Entry</button>
+              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">{editingId ? "Update Entry" : "Save Entry"}</button>
             </div>
           </form>
         </Card>
@@ -135,6 +172,7 @@ export default function Labor() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="font-semibold text-blue-600">{formatCurrency(entry.totalPay)}</span>
+                  <button onClick={() => openEdit(entry)} className="text-blue-500 hover:text-blue-700"><Pencil className="w-4 h-4" /></button>
                   <button onClick={() => handleDelete(entry.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </Card>

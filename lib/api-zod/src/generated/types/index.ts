@@ -48,5 +48,6 @@ export * from "./updateExpenseBody";
 export * from "./updateFollowupBody";
 export * from "./updateInvoiceBody";
 export * from "./updateLaborEntryBody";
+export * from "./updateReceiptBody";
 export * from "./updateShiftBody";
 export * from "./updateTodoBody";

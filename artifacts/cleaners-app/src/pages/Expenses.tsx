@@ -6,11 +6,14 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency, getStatusColor } from "@/lib/utils";
-import { Plus, Trash2, X, DollarSign } from "lucide-react";
+import { Plus, Trash2, X, DollarSign, Pencil } from "lucide-react";
 
 type ExpenseItem = ListExpensesQueryResult[number];
 
 const CATEGORIES = ["Supplies", "Fuel", "Equipment", "Insurance", "Marketing", "Vehicle", "Office", "Other"];
+
+type FormState = { category: string; description: string; amount: string; date: string; vendor: string; notes: string };
+const emptyForm: FormState = { category: "Supplies", description: "", amount: "", date: "", vendor: "", notes: "" };
 
 export default function Expenses() {
   const queryClient = useQueryClient();
@@ -19,22 +22,54 @@ export default function Expenses() {
   const [endDate, setEndDate] = useState("");
   const { data: expenses, isLoading } = useListExpenses({ category: filterCategory || undefined, startDate: startDate || undefined, endDate: endDate || undefined });
   const createExpense = useCreateExpense();
+  const updateExpense = useUpdateExpense();
   const deleteExpense = useDeleteExpense();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ category: "Supplies", description: "", amount: "", date: "", vendor: "", notes: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (e: ExpenseItem) => {
+    setEditingId(e.id);
+    setForm({
+      category: e.category,
+      description: e.description,
+      amount: e.amount,
+      date: e.date,
+      vendor: e.vendor ?? "",
+      notes: e.notes ?? "",
+    });
+    setShowForm(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createExpense.mutate(
-      { data: { category: form.category, description: form.description, amount: form.amount, date: form.date, vendor: form.vendor || undefined, notes: form.notes || undefined } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
-          setShowForm(false);
-          setForm({ category: "Supplies", description: "", amount: "", date: "", vendor: "", notes: "" });
-        },
-      }
-    );
+    const payload = {
+      category: form.category,
+      description: form.description,
+      amount: form.amount,
+      date: form.date,
+      vendor: form.vendor || undefined,
+      notes: form.notes || undefined,
+    };
+
+    const onSuccess = () => {
+      queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    };
+
+    if (editingId) {
+      updateExpense.mutate({ id: editingId, data: payload }, { onSuccess });
+    } else {
+      createExpense.mutate({ data: payload }, { onSuccess });
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -47,7 +82,7 @@ export default function Expenses() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Expenses" subtitle={`Total: ${formatCurrency(totalExpenses)}`} action={<button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Expense</button>} />
+      <PageHeader title="Expenses" subtitle={`Total: ${formatCurrency(totalExpenses)}`} action={<button onClick={openCreate} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Expense</button>} />
 
       <div className="flex flex-wrap gap-3">
         <select value={filterCategory} onChange={e => setFilterCategory(e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
@@ -61,8 +96,8 @@ export default function Expenses() {
       {showForm && (
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg">New Expense</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            <h3 className="font-semibold text-lg">{editingId ? "Edit Expense" : "New Expense"}</h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }}><X className="w-5 h-5" /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -92,7 +127,7 @@ export default function Expenses() {
               <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full border rounded-lg px-3 py-2" rows={2} />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">Save Expense</button>
+              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">{editingId ? "Update Expense" : "Save Expense"}</button>
             </div>
           </form>
         </Card>
@@ -121,6 +156,7 @@ export default function Expenses() {
               <div className="flex items-center gap-3">
                 <Badge className={getStatusColor(e.category)}>{e.category}</Badge>
                 <span className="font-semibold text-rose-600">{formatCurrency(e.amount)}</span>
+                <button onClick={() => openEdit(e)} className="text-blue-500 hover:text-blue-700"><Pencil className="w-4 h-4" /></button>
                 <button onClick={() => handleDelete(e.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
               </div>
             </Card>

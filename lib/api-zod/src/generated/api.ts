@@ -488,6 +488,32 @@ export const CreateReceiptBody = zod.object({
 });
 
 /**
+ * @summary Update a receipt
+ */
+export const UpdateReceiptParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UpdateReceiptBody = zod.object({
+  invoiceId: zod.number().optional(),
+  amount: zod.string().optional(),
+  paymentMethod: zod.string().optional(),
+  paymentDate: zod.string().optional(),
+  notes: zod.string().optional(),
+});
+
+export const UpdateReceiptResponse = zod.object({
+  id: zod.number(),
+  invoiceId: zod.number().nullish(),
+  amount: zod.string(),
+  paymentMethod: zod.string(),
+  paymentDate: zod.string(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Delete a receipt
  */
 export const DeleteReceiptParams = zod.object({

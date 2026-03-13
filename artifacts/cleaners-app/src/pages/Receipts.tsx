@@ -1,35 +1,68 @@
 import React, { useState } from "react";
-import { useListReceipts, useCreateReceipt, useDeleteReceipt } from "@workspace/api-client-react";
+import { useListReceipts, useCreateReceipt, useUpdateReceipt, useDeleteReceipt } from "@workspace/api-client-react";
 import type { ListReceiptsQueryResult } from "@workspace/api-client-react";
 import { getListReceiptsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency } from "@/lib/utils";
-import { Plus, Trash2, X, Receipt } from "lucide-react";
+import { Plus, Trash2, X, Receipt, Pencil } from "lucide-react";
 
 type ReceiptItem = ListReceiptsQueryResult[number];
+
+type FormState = { invoiceId: string; amount: string; paymentMethod: string; paymentDate: string; notes: string };
+const emptyForm: FormState = { invoiceId: "", amount: "", paymentMethod: "cash", paymentDate: "", notes: "" };
 
 export default function Receipts() {
   const queryClient = useQueryClient();
   const { data: receipts, isLoading } = useListReceipts();
   const createReceipt = useCreateReceipt();
+  const updateReceipt = useUpdateReceipt();
   const deleteReceipt = useDeleteReceipt();
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ invoiceId: "", amount: "", paymentMethod: "cash", paymentDate: "", notes: "" });
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [form, setForm] = useState<FormState>(emptyForm);
+
+  const openCreate = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    setShowForm(true);
+  };
+
+  const openEdit = (r: ReceiptItem) => {
+    setEditingId(r.id);
+    setForm({
+      invoiceId: r.invoiceId?.toString() ?? "",
+      amount: r.amount,
+      paymentMethod: r.paymentMethod,
+      paymentDate: r.paymentDate,
+      notes: r.notes ?? "",
+    });
+    setShowForm(true);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    createReceipt.mutate(
-      { data: { amount: form.amount, paymentMethod: form.paymentMethod, paymentDate: form.paymentDate, notes: form.notes || undefined, invoiceId: form.invoiceId ? parseInt(form.invoiceId) : undefined } },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: getListReceiptsQueryKey() });
-          setShowForm(false);
-          setForm({ invoiceId: "", amount: "", paymentMethod: "cash", paymentDate: "", notes: "" });
-        },
-      }
-    );
+    const payload = {
+      amount: form.amount,
+      paymentMethod: form.paymentMethod,
+      paymentDate: form.paymentDate,
+      notes: form.notes || undefined,
+      invoiceId: form.invoiceId ? parseInt(form.invoiceId) : undefined,
+    };
+
+    const onSuccess = () => {
+      queryClient.invalidateQueries({ queryKey: getListReceiptsQueryKey() });
+      setShowForm(false);
+      setEditingId(null);
+      setForm(emptyForm);
+    };
+
+    if (editingId) {
+      updateReceipt.mutate({ id: editingId, data: payload }, { onSuccess });
+    } else {
+      createReceipt.mutate({ data: payload }, { onSuccess });
+    }
   };
 
   const handleDelete = (id: number) => {
@@ -40,13 +73,13 @@ export default function Receipts() {
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Receipts" subtitle="Track payment receipts" action={<button onClick={() => setShowForm(true)} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Receipt</button>} />
+      <PageHeader title="Receipts" subtitle="Track payment receipts" action={<button onClick={openCreate} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl font-medium hover:opacity-90 transition"><Plus className="w-4 h-4" /> New Receipt</button>} />
 
       {showForm && (
         <Card className="p-6">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="font-semibold text-lg">New Receipt</h3>
-            <button onClick={() => setShowForm(false)}><X className="w-5 h-5" /></button>
+            <h3 className="font-semibold text-lg">{editingId ? "Edit Receipt" : "New Receipt"}</h3>
+            <button onClick={() => { setShowForm(false); setEditingId(null); }}><X className="w-5 h-5" /></button>
           </div>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -77,7 +110,7 @@ export default function Receipts() {
               <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="w-full border rounded-lg px-3 py-2" rows={2} />
             </div>
             <div className="md:col-span-2">
-              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">Save Receipt</button>
+              <button type="submit" className="bg-primary text-white px-6 py-2 rounded-lg font-medium hover:opacity-90">{editingId ? "Update Receipt" : "Save Receipt"}</button>
             </div>
           </form>
         </Card>
@@ -104,7 +137,8 @@ export default function Receipts() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                {r.notes && <span className="text-sm text-slate-400">{r.notes}</span>}
+                {r.notes && <span className="text-sm text-slate-400 max-w-[200px] truncate">{r.notes}</span>}
+                <button onClick={() => openEdit(r)} className="text-blue-500 hover:text-blue-700"><Pencil className="w-4 h-4" /></button>
                 <button onClick={() => handleDelete(r.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
               </div>
             </Card>
