@@ -1,21 +1,103 @@
-import React from "react";
-import { useGetDashboardStats, useListChecklistItems, useUpdateChecklistItem } from "@workspace/api-client-react";
-import { getGetDashboardStatsQueryKey, getListChecklistItemsQueryKey } from "@workspace/api-client-react";
+import React, { useMemo, useState } from "react";
+import {
+  useGetDashboardStats,
+  useListChecklistItems,
+  useUpdateChecklistItem,
+  useListShifts,
+  useListTodos,
+  useListFollowups,
+  useListExpenses,
+} from "@workspace/api-client-react";
+import {
+  getGetDashboardStatsQueryKey,
+  getListChecklistItemsQueryKey,
+} from "@workspace/api-client-react";
+import type {
+  ListTodosQueryResult,
+  ListFollowupsQueryResult,
+  ListShiftsQueryResult,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
-import { PageHeader } from "@/components/Layout";
 import { cn, formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Briefcase, FileText, DollarSign, Users, CheckSquare, PhoneCall, CheckCircle2, Circle, Plus, CalendarDays, Receipt, ClipboardList } from "lucide-react";
+import {
+  Briefcase,
+  FileText,
+  DollarSign,
+  Users,
+  CheckSquare,
+  PhoneCall,
+  CheckCircle2,
+  Circle,
+  CalendarDays,
+  Receipt,
+  ClipboardList,
+  TrendingUp,
+  Clock,
+  MapPin,
+  ArrowRight,
+  ChevronRight,
+  ChevronDown,
+  Sparkles,
+  Sun,
+  Sunset,
+  Moon,
+  Waves,
+  AlertCircle,
+  Star,
+} from "lucide-react";
 import { useLocation } from "wouter";
-const bgImage = `${import.meta.env.BASE_URL}images/dashboard-bg.png`;
+import logo from "@assets/Untitled-1_1773440534890.png";
+
+type Todo = ListTodosQueryResult[number];
+type Followup = ListFollowupsQueryResult[number];
+type Shift = ListShiftsQueryResult[number];
+
+function getGreeting(): { text: string; icon: typeof Sun; subtext: string } {
+  const h = new Date().getHours();
+  if (h < 12) return { text: "Good morning", icon: Sun, subtext: "Let's make today count." };
+  if (h < 17) return { text: "Good afternoon", icon: Sunset, subtext: "Keep the momentum going." };
+  return { text: "Good evening", icon: Moon, subtext: "Great work today." };
+}
+
+function getToday() {
+  return new Date().toISOString().split("T")[0]!;
+}
+
+function ProgressRing({ percent, size = 56, stroke = 5, color = "text-primary" }: { percent: number; size?: number; stroke?: number; color?: string }) {
+  const radius = (size - stroke) / 2;
+  const circumference = 2 * Math.PI * radius;
+  const offset = circumference - (percent / 100) * circumference;
+
+  return (
+    <svg width={size} height={size} className="shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-slate-100" />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={radius}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={stroke}
+        strokeLinecap="round"
+        strokeDasharray={circumference}
+        strokeDashoffset={offset}
+        className={cn("progress-ring-circle", color)}
+      />
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" className="fill-slate-700 text-[11px] font-bold">
+        {percent}%
+      </text>
+    </svg>
+  );
+}
 
 const quickActions = [
-  { label: "New Booking", icon: CalendarDays, href: "/bookings", color: "bg-blue-500" },
-  { label: "Add Invoice", icon: FileText, href: "/invoices", color: "bg-amber-500" },
-  { label: "Log Expense", icon: DollarSign, href: "/expenses", color: "bg-rose-500" },
-  { label: "Add Task", icon: ClipboardList, href: "/todos", color: "bg-emerald-500" },
-  { label: "New Receipt", icon: Receipt, href: "/receipts", color: "bg-teal-500" },
-  { label: "Add Follow-Up", icon: PhoneCall, href: "/followups", color: "bg-violet-500" },
+  { label: "New Booking", icon: CalendarDays, href: "/bookings", gradient: "from-blue-500 to-blue-600" },
+  { label: "Add Invoice", icon: FileText, href: "/invoices", gradient: "from-amber-500 to-orange-500" },
+  { label: "Log Expense", icon: DollarSign, href: "/expenses", gradient: "from-rose-500 to-pink-500" },
+  { label: "Add Task", icon: ClipboardList, href: "/todos", gradient: "from-emerald-500 to-green-600" },
+  { label: "New Receipt", icon: Receipt, href: "/receipts", gradient: "from-teal-500 to-cyan-500" },
+  { label: "Follow-Up", icon: PhoneCall, href: "/followups", gradient: "from-violet-500 to-purple-600" },
 ];
 
 export default function Dashboard() {
@@ -23,166 +105,485 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { data: stats, isLoading: statsLoading } = useGetDashboardStats();
   const { data: checklist, isLoading: checklistLoading } = useListChecklistItems();
+  const { data: shifts } = useListShifts();
+  const { data: todos } = useListTodos();
+  const { data: followups } = useListFollowups();
+  const { data: expenses } = useListExpenses();
   const updateChecklist = useUpdateChecklistItem();
+  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
 
   const handleToggleChecklist = (id: number, currentCompleted: boolean) => {
     updateChecklist.mutate(
       { id, data: { completed: !currentCompleted } },
-      { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListChecklistItemsQueryKey() }) }
+      {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: getListChecklistItemsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
+        },
+      }
     );
   };
 
-  // Group checklist items by category
-  const categories = React.useMemo(() => {
+  const greeting = getGreeting();
+  const today = getToday();
+
+  const categories = useMemo(() => {
     if (!checklist) return {};
     const grouped: Record<string, typeof checklist> = {};
-    checklist.forEach(item => {
+    checklist.forEach((item) => {
       if (!grouped[item.category]) grouped[item.category] = [];
       grouped[item.category].push(item);
     });
     return grouped;
   }, [checklist]);
 
+  const checklistProgress = useMemo(() => {
+    if (!checklist || checklist.length === 0) return 0;
+    return Math.round((checklist.filter((i) => i.completed).length / checklist.length) * 100);
+  }, [checklist]);
+
+  const todaysShifts = useMemo(() => {
+    return shifts?.filter((s: Shift) => s.date === today) || [];
+  }, [shifts, today]);
+
+  const urgentTodos = useMemo(() => {
+    return todos?.filter((t: Todo) => !t.completed).slice(0, 4) || [];
+  }, [todos]);
+
+  const pendingFollowups = useMemo(() => {
+    return followups?.filter((f: Followup) => f.status === "pending").slice(0, 3) || [];
+  }, [followups]);
+
+  const recentExpenseTotal = useMemo(() => {
+    if (!expenses) return 0;
+    return expenses.reduce((sum, e) => sum + parseFloat(e.amount || "0"), 0);
+  }, [expenses]);
+
   if (statsLoading || checklistLoading) {
-    return <div className="p-8 text-center text-slate-500 font-medium animate-pulse">Loading dashboard data...</div>;
+    return (
+      <div className="p-12 flex flex-col items-center justify-center gap-4">
+        <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
+        <p className="text-slate-500 font-medium">Loading your dashboard...</p>
+      </div>
+    );
   }
 
   const statCards = [
-    { title: "Today's Bookings", value: stats?.todayBookings || 0, icon: Briefcase, color: "bg-blue-500" },
-    { title: "Pending Invoices", value: stats?.pendingInvoices || 0, icon: FileText, color: "bg-amber-500" },
-    { title: "Total Revenue", value: formatCurrency(stats?.totalRevenue), icon: DollarSign, color: "bg-emerald-500" },
-    { title: "Active Employees", value: stats?.activeEmployees || 0, icon: Users, color: "bg-purple-500" },
-    { title: "Pending Todos", value: stats?.pendingTodos || 0, icon: CheckSquare, color: "bg-rose-500" },
-    { title: "Follow-ups Due", value: stats?.pendingFollowups || 0, icon: PhoneCall, color: "bg-indigo-500" },
+    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600", trend: "+2 this week" },
+    { title: "Outstanding", value: stats?.pendingInvoices || 0, icon: FileText, gradient: "from-amber-500 to-orange-500", bgLight: "bg-amber-50", textColor: "text-amber-600", trend: "invoices unpaid" },
+    { title: "Revenue", value: formatCurrency(stats?.totalRevenue), icon: TrendingUp, gradient: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50", textColor: "text-emerald-600", trend: "total earned" },
+    { title: "Team", value: stats?.activeEmployees || 0, icon: Users, gradient: "from-purple-500 to-violet-600", bgLight: "bg-purple-50", textColor: "text-purple-600", trend: "active members" },
   ];
 
+  const todayFormatted = new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
   return (
-    <div className="space-y-8 pb-12">
-      {/* Decorative Hero */}
-      <div className="relative rounded-3xl overflow-hidden shadow-xl animate-fade-in bg-primary">
-        <img 
-          src={`${import.meta.env.BASE_URL}images/dashboard-bg.png`} 
-          alt="Dashboard Background" 
-          className="absolute inset-0 w-full h-full object-cover mix-blend-overlay opacity-40"
-        />
-        <div className="relative z-10 p-8 md:p-12">
-          <h1 className="text-3xl md:text-5xl font-display font-extrabold text-white mb-2">Welcome to 808 Cleaners</h1>
-          <p className="text-primary-foreground/80 font-medium text-lg max-w-2xl">
-            Here's what's happening with your business today. Keep track of jobs, staff, and finances all in one place.
-          </p>
+    <div className="space-y-6 pb-12">
+      {/* Hero Section */}
+      <div className="relative rounded-3xl overflow-hidden animate-fade-in-scale">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#003087] via-[#00408f] to-[#002060]" />
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-cyan-400/20 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+        </div>
+        <div className="relative z-10 px-8 py-8 md:px-10 md:py-10">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 text-white/60 text-sm font-medium">
+                <CalendarDays className="w-4 h-4" />
+                {todayFormatted}
+              </div>
+              <div className="flex items-center gap-3">
+                <greeting.icon className="w-8 h-8 text-amber-300" />
+                <h1 className="text-3xl md:text-4xl font-display font-extrabold text-white">
+                  {greeting.text}
+                </h1>
+              </div>
+              <p className="text-white/70 font-medium text-base max-w-lg">
+                {greeting.subtext} You have <span className="text-white font-bold">{stats?.todayBookings || 0} jobs</span> today,{" "}
+                <span className="text-amber-300 font-bold">{stats?.pendingInvoices || 0} unpaid invoices</span>, and{" "}
+                <span className="text-white font-bold">{stats?.pendingTodos || 0} tasks</span> pending.
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <img src={logo} alt="808 All Purpose Cleaners" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
+            </div>
+          </div>
+
+          {/* Quick Actions - embedded in hero */}
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-6">
+            {quickActions.map((action) => (
+              <button
+                key={action.label}
+                onClick={() => navigate(action.href)}
+                className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all duration-300 group"
+              >
+                <div className={cn("p-2 rounded-xl bg-gradient-to-br shadow-lg group-hover:scale-110 transition-transform", action.gradient)}>
+                  <action.icon className="w-4 h-4 text-white" />
+                </div>
+                <span className="text-[11px] font-semibold text-white/80 group-hover:text-white transition-colors">{action.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 animate-fade-in stagger-1">
-        {quickActions.map(action => (
-          <button
-            key={action.label}
-            onClick={() => navigate(action.href)}
-            className="flex flex-col items-center gap-2 p-4 bg-white rounded-2xl border border-border/60 shadow-sm hover:-translate-y-1 hover:shadow-md transition-all duration-300 group"
-          >
-            <div className={cn("p-3 rounded-xl text-white shadow-lg group-hover:scale-110 transition-transform", action.color)}>
-              <action.icon className="w-5 h-5" />
-            </div>
-            <span className="text-sm font-bold text-slate-700 group-hover:text-primary transition-colors">{action.label}</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in stagger-1">
+      {/* Stats Row */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {statCards.map((stat, i) => (
-          <Card key={i} className="p-6 flex items-center gap-5 hover:-translate-y-1 transition-transform duration-300">
-            <div className={`p-4 rounded-2xl text-white shadow-lg ${stat.color}`}>
-              <stat.icon className="w-7 h-7" />
+          <Card
+            key={stat.title}
+            className={cn(
+              "p-5 flex flex-col gap-3 hover:-translate-y-1 transition-all duration-300 cursor-pointer animate-fade-in-scale group",
+              `stagger-${i + 1}`
+            )}
+            onClick={() => {
+              if (stat.title === "Today's Jobs") navigate("/bookings");
+              if (stat.title === "Outstanding") navigate("/invoices");
+              if (stat.title === "Revenue") navigate("/invoices");
+              if (stat.title === "Team") navigate("/employees");
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-md", stat.gradient)}>
+                <stat.icon className="w-5 h-5 text-white" />
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
-              <p className="text-sm font-bold text-slate-500 uppercase tracking-wider">{stat.title}</p>
-              <h3 className="text-3xl font-black text-slate-900 mt-1">{stat.value}</h3>
+              <h3 className="text-2xl md:text-3xl font-black text-slate-900 animate-count-up">{stat.value}</h3>
+              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">{stat.title}</p>
             </div>
+            <p className={cn("text-xs font-medium", stat.textColor)}>{stat.trend}</p>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Recent Bookings */}
-        <div className="xl:col-span-1 space-y-6 animate-fade-in stagger-2">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold font-display">Recent Bookings</h2>
-          </div>
-          <div className="space-y-4">
-            {stats?.recentBookings?.length === 0 ? (
-              <Card className="p-8 text-center text-slate-500">No recent bookings found.</Card>
-            ) : (
-              stats?.recentBookings?.map((booking) => (
-                <Card key={booking.id} className="p-5 border-l-4 border-l-primary">
-                  <div className="flex justify-between items-start mb-2">
-                    <div>
-                      <h4 className="font-bold text-lg text-slate-900">{booking.clientName || "Unknown Client"}</h4>
-                      <p className="text-sm text-slate-500 font-medium">{booking.serviceType}</p>
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        {/* Left Column: Schedule + Tasks */}
+        <div className="xl:col-span-5 space-y-6">
+          {/* Today's Schedule */}
+          <Card className="animate-fade-in-scale stagger-5">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-blue-50">
+                  <Clock className="w-4 h-4 text-blue-600" />
+                </div>
+                <h2 className="font-display font-bold text-lg">Today's Schedule</h2>
+              </div>
+              <button onClick={() => navigate("/scheduling")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="px-5 pb-5">
+              {todaysShifts.length === 0 ? (
+                <div className="text-center py-8 text-slate-400">
+                  <Waves className="w-10 h-10 mx-auto mb-2 text-slate-200" />
+                  <p className="text-sm font-medium">No shifts scheduled today</p>
+                  <button onClick={() => navigate("/scheduling")} className="text-xs text-primary font-bold mt-2 hover:underline">
+                    Schedule a shift
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {todaysShifts.slice(0, 4).map((shift: Shift) => (
+                    <div key={shift.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-blue-50/50 transition-colors">
+                      <div className="w-1 h-10 rounded-full bg-blue-500 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-bold text-sm text-slate-900 truncate">Employee #{shift.employeeId}</p>
+                        <p className="text-xs text-slate-500">{shift.startTime} - {shift.endTime}</p>
+                      </div>
+                      {shift.notes && (
+                        <span className="text-xs text-slate-400 truncate max-w-[80px]">{shift.notes}</span>
+                      )}
                     </div>
-                    <Badge className={getStatusColor(booking.status)}>{booking.status}</Badge>
-                  </div>
-                  <div className="text-sm text-slate-600 mt-3 flex items-center justify-between bg-slate-50 p-2 rounded-lg">
-                    <span className="font-medium">{formatDate(booking.date)}</span>
-                    <span className="font-bold text-primary">{booking.time}</span>
-                  </div>
-                </Card>
-              ))
-            )}
-          </div>
+                  ))}
+                  {todaysShifts.length > 4 && (
+                    <p className="text-xs text-center text-primary font-bold pt-1">+{todaysShifts.length - 4} more shifts</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Pending Tasks */}
+          <Card className="animate-fade-in-scale stagger-6">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-50">
+                  <CheckSquare className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h2 className="font-display font-bold text-lg">Pending Tasks</h2>
+                {urgentTodos.length > 0 && (
+                  <span className="text-xs font-bold text-white bg-rose-500 rounded-full w-5 h-5 flex items-center justify-center">{stats?.pendingTodos || 0}</span>
+                )}
+              </div>
+              <button onClick={() => navigate("/todos")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="px-5 pb-5">
+              {urgentTodos.length === 0 ? (
+                <div className="text-center py-6 text-slate-400">
+                  <Sparkles className="w-8 h-8 mx-auto mb-2 text-emerald-200" />
+                  <p className="text-sm font-medium">All caught up!</p>
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {urgentTodos.map((todo: Todo) => (
+                    <div key={todo.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
+                      <Circle className="w-4 h-4 text-slate-300 mt-0.5 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-slate-700 truncate">{todo.title}</p>
+                        {todo.priority && (
+                          <Badge className={cn(
+                            "mt-1",
+                            todo.priority === "high" ? "bg-rose-100 text-rose-700 border-rose-200" :
+                            todo.priority === "medium" ? "bg-amber-100 text-amber-700 border-amber-200" :
+                            "bg-slate-100 text-slate-600 border-slate-200"
+                          )}>
+                            {todo.priority}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Follow-ups Due */}
+          <Card className="animate-fade-in-scale stagger-7">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-violet-50">
+                  <PhoneCall className="w-4 h-4 text-violet-600" />
+                </div>
+                <h2 className="font-display font-bold text-lg">Follow-ups Due</h2>
+              </div>
+              <button onClick={() => navigate("/followups")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="px-5 pb-5">
+              {pendingFollowups.length === 0 ? (
+                <div className="text-center py-6 text-slate-400">
+                  <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-200" />
+                  <p className="text-sm font-medium">No follow-ups pending</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {pendingFollowups.map((f: Followup) => (
+                    <div key={f.id} className="flex items-start gap-3 p-3 bg-violet-50/50 rounded-xl border border-violet-100/60">
+                      <AlertCircle className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold text-slate-800 truncate">{f.clientName}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{f.contactMethod} · Due {formatDate(f.dueDate)}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
         </div>
 
-        {/* New Business Checklist */}
-        <div className="xl:col-span-2 space-y-6 animate-fade-in stagger-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold font-display">New Business Checklist</h2>
-            <Badge className="bg-primary/10 text-primary border-primary/20 text-sm py-1">Startup Guide</Badge>
-          </div>
-          
-          <div className="grid gap-6 sm:grid-cols-2">
-            {Object.entries(categories).map(([category, items]) => {
-              const completedCount = items.filter(i => i.completed).length;
-              const totalCount = items.length;
-              const percent = Math.round((completedCount / totalCount) * 100) || 0;
+        {/* Center Column: Recent Bookings + Financials */}
+        <div className="xl:col-span-4 space-y-6">
+          {/* Recent Bookings */}
+          <Card className="animate-fade-in-scale stagger-5">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10">
+                  <Briefcase className="w-4 h-4 text-primary" />
+                </div>
+                <h2 className="font-display font-bold text-lg">Recent Bookings</h2>
+              </div>
+              <button onClick={() => navigate("/bookings")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                View all <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="px-5 pb-5 space-y-3">
+              {!stats?.recentBookings?.length ? (
+                <div className="text-center py-8 text-slate-400">
+                  <CalendarDays className="w-10 h-10 mx-auto mb-2 text-slate-200" />
+                  <p className="text-sm font-medium">No bookings yet</p>
+                  <button onClick={() => navigate("/bookings")} className="text-xs text-primary font-bold mt-2 hover:underline">
+                    Create first booking
+                  </button>
+                </div>
+              ) : (
+                stats.recentBookings.map((booking) => (
+                  <div key={booking.id} className="group p-4 rounded-2xl bg-slate-50/80 hover:bg-white hover:shadow-md border border-transparent hover:border-border/60 transition-all duration-300">
+                    <div className="flex justify-between items-start mb-2">
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-bold text-slate-900 truncate">{booking.clientName || "Walk-in Customer"}</h4>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Star className="w-3 h-3 text-amber-400" />
+                          <span className="text-xs font-medium text-slate-500">{booking.serviceType}</span>
+                        </div>
+                      </div>
+                      <Badge className={cn("shrink-0 ml-2", getStatusColor(booking.status))}>{booking.status}</Badge>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                      <span className="flex items-center gap-1">
+                        <CalendarDays className="w-3 h-3" />
+                        {formatDate(booking.date)}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {booking.time}
+                      </span>
+                      {booking.location && (
+                        <span className="flex items-center gap-1 truncate">
+                          <MapPin className="w-3 h-3" />
+                          {booking.location}
+                        </span>
+                      )}
+                    </div>
+                    {booking.estimatedPrice && (
+                      <div className="mt-2 text-right">
+                        <span className="text-sm font-bold text-emerald-600">{formatCurrency(booking.estimatedPrice)}</span>
+                      </div>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+          </Card>
 
-              return (
-                <Card key={category} className="flex flex-col">
-                  <div className="p-5 border-b border-border/50 bg-slate-50/50 flex flex-col gap-3">
-                    <div className="flex justify-between items-end">
-                      <h3 className="font-bold text-slate-900">{category}</h3>
-                      <span className="text-sm font-bold text-primary">{completedCount}/{totalCount}</span>
-                    </div>
-                    <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-                      <div className="bg-primary h-2 rounded-full transition-all duration-500" style={{ width: `${percent}%` }} />
-                    </div>
-                  </div>
-                  <div className="p-2 flex-1">
-                    {items.map(item => (
+          {/* Financial Snapshot */}
+          <Card className="animate-fade-in-scale stagger-6">
+            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-emerald-50">
+                  <DollarSign className="w-4 h-4 text-emerald-600" />
+                </div>
+                <h2 className="font-display font-bold text-lg">Financial Snapshot</h2>
+              </div>
+              <button onClick={() => navigate("/tax-reports")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+                Reports <ArrowRight className="w-3 h-3" />
+              </button>
+            </div>
+            <div className="px-5 pb-5 space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
+                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Revenue</p>
+                  <p className="text-xl font-black text-emerald-700 mt-1">{formatCurrency(stats?.totalRevenue)}</p>
+                </div>
+                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100">
+                  <p className="text-xs font-bold text-rose-600 uppercase tracking-wider">Expenses</p>
+                  <p className="text-xl font-black text-rose-700 mt-1">{formatCurrency(recentExpenseTotal)}</p>
+                </div>
+              </div>
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-cyan-500/5 border border-primary/10">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-bold text-primary uppercase tracking-wider">Net Position</p>
+                  <TrendingUp className="w-4 h-4 text-primary" />
+                </div>
+                <p className="text-2xl font-black text-primary mt-1">
+                  {formatCurrency(parseFloat(stats?.totalRevenue || "0") - recentExpenseTotal)}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Column: Business Checklist */}
+        <div className="xl:col-span-3 space-y-6">
+          <Card className="animate-fade-in-scale stagger-7">
+            <div className="px-5 pt-5 pb-4">
+              <div className="flex items-center gap-3 mb-4">
+                <ProgressRing percent={checklistProgress} />
+                <div>
+                  <h2 className="font-display font-bold text-lg leading-tight">Startup Checklist</h2>
+                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                    {checklist?.filter((i) => i.completed).length || 0} of {checklist?.length || 0} complete
+                  </p>
+                </div>
+              </div>
+
+              {checklistProgress === 100 && (
+                <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                  <Sparkles className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
+                  <p className="text-sm font-bold text-emerald-700">All done! You're ready to go.</p>
+                </div>
+              )}
+
+              <div className="space-y-1.5 max-h-[500px] overflow-y-auto pr-1">
+                {Object.entries(categories).map(([category, items]) => {
+                  const completedCount = items.filter((i) => i.completed).length;
+                  const totalCount = items.length;
+                  const percent = Math.round((completedCount / totalCount) * 100) || 0;
+                  const isExpanded = expandedCategory === category;
+                  const allDone = completedCount === totalCount;
+
+                  return (
+                    <div key={category} className="rounded-xl overflow-hidden">
                       <button
-                        key={item.id}
-                        onClick={() => handleToggleChecklist(item.id, item.completed)}
-                        className="w-full flex items-start gap-3 p-3 rounded-xl hover:bg-slate-50 text-left transition-colors group disabled:opacity-50"
-                        disabled={updateChecklist.isPending}
+                        onClick={() => setExpandedCategory(isExpanded ? null : category)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 text-left transition-colors rounded-xl",
+                          isExpanded ? "bg-primary/5" : "hover:bg-slate-50"
+                        )}
                       >
-                        <div className="shrink-0 mt-0.5 text-primary transition-transform group-hover:scale-110">
-                          {item.completed ? <CheckCircle2 className="w-5 h-5 text-emerald-500" /> : <Circle className="w-5 h-5 text-slate-300 group-hover:text-primary/50" />}
+                        <div className={cn(
+                          "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0",
+                          allDone ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500"
+                        )}>
+                          {allDone ? <CheckCircle2 className="w-4 h-4" /> : `${percent}%`}
                         </div>
-                        <div>
-                          <p className={cn("text-sm font-semibold transition-colors", item.completed ? "text-slate-400 line-through" : "text-slate-700")}>
-                            {item.title}
-                          </p>
-                          {item.description && !item.completed && (
-                            <p className="text-xs text-slate-500 mt-1 leading-snug">{item.description}</p>
-                          )}
+                        <div className="flex-1 min-w-0">
+                          <p className={cn("text-sm font-bold truncate", allDone ? "text-emerald-600" : "text-slate-800")}>{category}</p>
+                          <div className="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
+                            <div
+                              className={cn("h-1 rounded-full animate-progress-fill", allDone ? "bg-emerald-500" : "bg-primary")}
+                              style={{ width: `${percent}%` }}
+                            />
+                          </div>
                         </div>
+                        <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform", isExpanded && "rotate-180")} />
                       </button>
-                    ))}
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
+
+                      {isExpanded && (
+                        <div className="px-2 pb-2 space-y-0.5">
+                          {items.map((item) => (
+                            <button
+                              key={item.id}
+                              onClick={() => handleToggleChecklist(item.id, item.completed)}
+                              className="w-full flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 text-left transition-colors group disabled:opacity-50"
+                              disabled={updateChecklist.isPending}
+                            >
+                              <div className="shrink-0 mt-0.5 transition-transform group-hover:scale-110">
+                                {item.completed ? (
+                                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                                ) : (
+                                  <Circle className="w-4 h-4 text-slate-300 group-hover:text-primary/50" />
+                                )}
+                              </div>
+                              <p className={cn(
+                                "text-xs font-medium leading-snug",
+                                item.completed ? "text-slate-400 line-through" : "text-slate-600"
+                              )}>
+                                {item.title}
+                              </p>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </Card>
         </div>
       </div>
     </div>
