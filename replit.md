@@ -12,27 +12,54 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **TypeScript version**: 5.9
 - **API framework**: Express 5
 - **Database**: PostgreSQL + Drizzle ORM
+- **Frontend**: React + Vite + TailwindCSS v4 + Wouter (routing)
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
+
+## Application: 808 All Purpose Cleaners
+
+Business management app for a cleaning company in South Oahu, HI (cars, boats, condos).
+
+- **Company**: 808 All Purpose Cleaners
+- **Phone**: 808-723-1011
+- **Email**: Lainecaldera@aol.com
+- **Brand color**: Deep navy blue #003087
+
+### Modules (13 total)
+
+1. **Dashboard** — Stats overview, recent bookings, New Business Checklist (62 items, 9 categories)
+2. **Employees** — CRUD for staff members
+3. **Scheduling** — Shift management with calendar view
+4. **Bookings** — Job booking management
+5. **Clients** — Customer database
+6. **Invoices** — Invoice generation and tracking
+7. **Receipts** — Payment receipt tracking
+8. **Expenses** — Expense tracking with categories and date filters
+9. **Labor & Payroll** — Hours logging, pay calculation
+10. **To-Do List** — Task management with priorities
+11. **Follow-Ups** — Lead/client follow-up tracking
+12. **Campaign Manager** — Marketing campaign planning
+13. **Tax Reports** — Revenue, expense, and profit reporting
 
 ## Structure
 
 ```text
 artifacts-monorepo/
 ├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
+│   ├── api-server/         # Express API server (port 8080)
+│   └── cleaners-app/       # React + Vite frontend (dynamic port via PORT env)
 ├── lib/                    # Shared libraries
 │   ├── api-spec/           # OpenAPI spec + Orval codegen config
 │   ├── api-client-react/   # Generated React Query hooks
 │   ├── api-zod/            # Generated Zod schemas from OpenAPI
 │   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── scripts/                # Utility scripts
+├── attached_assets/        # Logo and other assets
+├── pnpm-workspace.yaml
+├── tsconfig.base.json
+├── tsconfig.json
+└── package.json
 ```
 
 ## TypeScript & Composite Projects
@@ -56,11 +83,24 @@ Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` 
 
 - Entry: `src/index.ts` — reads `PORT`, starts Express
 - App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
+- Routes: `src/routes/index.ts` mounts sub-routers for all 13 modules
+- Route files: employees, shifts, clients, bookings, invoices, receipts, expenses, laborEntries, todos, followups, campaigns, checklist, reports
+- Checklist auto-seeds 62 items across 9 categories on first startup
 - Depends on: `@workspace/db`, `@workspace/api-zod`
 - `pnpm --filter @workspace/api-server run dev` — run the dev server
 - `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+
+### `artifacts/cleaners-app` (`@workspace/cleaners-app`)
+
+React + Vite frontend with TailwindCSS v4 and Wouter routing.
+
+- Entry: `src/App.tsx` — QueryClient, Router setup
+- Pages: `src/pages/` — 13 page components (Dashboard, Employees, Scheduling, Bookings, Clients, Invoices, Receipts, Expenses, Labor, Todos, Followups, Campaigns, Reports)
+- Layout: `src/components/Layout.tsx` — Sidebar navigation with all 13 modules
+- UI Components: `src/components/ui/` — Card, Badge, Toaster, Tooltip
+- Utilities: `src/lib/utils.ts` — cn, formatCurrency, formatDate, getStatusColor
+- Logo: imported from `@assets/` alias → `attached_assets/`
+- Depends on: `@workspace/api-client-react`
 
 ### `lib/db` (`@workspace/db`)
 
@@ -68,9 +108,8 @@ Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client insta
 
 - `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
 - `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
+- Schema tables: employees, shifts, clients, bookings, invoices, receipts, expenses, laborEntries, todos, followups, campaigns, checklistItems
 - `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
 
 Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
 
@@ -85,12 +124,20 @@ Run codegen: `pnpm --filter @workspace/api-spec run codegen`
 
 ### `lib/api-zod` (`@workspace/api-zod`)
 
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
+Generated Zod schemas from the OpenAPI spec. Used by `api-server` for response validation.
 
 ### `lib/api-client-react` (`@workspace/api-client-react`)
 
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
+Generated React Query hooks and fetch client from the OpenAPI spec.
 
 ### `scripts` (`@workspace/scripts`)
 
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`.
+
+## Development Notes
+
+- Express 5 async handlers use `Promise<void>` return types
+- Response pattern: `res.status(200).json(data); return;` (not `return res.json()`)
+- API routes are all prefixed under `/api`
+- Frontend uses `import.meta.env.BASE_URL` for asset paths
+- Vite aliases: `@` → `src/`, `@assets` → `attached_assets/`

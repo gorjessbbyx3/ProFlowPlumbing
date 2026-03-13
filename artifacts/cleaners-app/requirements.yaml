@@ -1,0 +1,14 @@
+packages:
+  "recharts": "For rendering beautiful dashboard analytics and tax report charts"
+  "date-fns": "For formatting and manipulating dates beautifully"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility for merging tailwind classes without conflicts"
+
+images:
+  - path: "artifacts/cleaners-app/public/images/dashboard-bg.png"
+    description: "Subtle abstract geometric waves in deep navy blue and soft white, clean corporate professional background texture, low contrast"
+    aspect_ratio: "16:9"
+
+notes:
+  - "Using generated hooks from @workspace/api-client-react"
+  - "Using Unsplash for generic avatars if needed, but primarily relying on UI design and typography"
