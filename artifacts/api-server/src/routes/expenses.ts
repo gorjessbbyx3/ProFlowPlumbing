@@ -30,6 +30,14 @@ router.get("/expenses", async (req, res): Promise<void> => {
   res.json(ListExpensesResponse.parse(expenses));
 });
 
+router.get("/expenses/:id", async (req, res): Promise<void> => {
+  const params = UpdateExpenseParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [expense] = await db.select().from(expensesTable).where(eq(expensesTable.id, params.data.id));
+  if (!expense) { res.status(404).json({ error: "Expense not found" }); return; }
+  res.json(UpdateExpenseResponse.parse(expense));
+});
+
 router.post("/expenses", async (req, res): Promise<void> => {
   const parsed = CreateExpenseBody.safeParse(req.body);
   if (!parsed.success) {

@@ -887,7 +887,18 @@ export const ListChecklistItemsResponse = zod.array(
 /**
  * @summary Toggle or update a checklist item
  */
+export const CreateChecklistItemBody = zod.object({
+  category: zod.string(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  sortOrder: zod.number().optional(),
+});
+
 export const UpdateChecklistItemParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const DeleteChecklistItemParams = zod.object({
   id: zod.coerce.number(),
 });
 

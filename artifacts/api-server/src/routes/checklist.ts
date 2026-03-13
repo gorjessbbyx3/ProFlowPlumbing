@@ -6,6 +6,8 @@ import {
   UpdateChecklistItemParams,
   UpdateChecklistItemBody,
   UpdateChecklistItemResponse,
+  CreateChecklistItemBody,
+  DeleteChecklistItemParams,
 } from "@workspace/api-zod";
 
 const router: IRouter = Router();
@@ -97,6 +99,21 @@ router.get("/checklist", async (_req, res): Promise<void> => {
   res.json(ListChecklistItemsResponse.parse(items));
 });
 
+router.get("/checklist/:id", async (req, res): Promise<void> => {
+  const params = UpdateChecklistItemParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [item] = await db.select().from(checklistItemsTable).where(eq(checklistItemsTable.id, params.data.id));
+  if (!item) { res.status(404).json({ error: "Checklist item not found" }); return; }
+  res.json(UpdateChecklistItemResponse.parse(item));
+});
+
+router.post("/checklist", async (req, res): Promise<void> => {
+  const parsed = CreateChecklistItemBody.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [item] = await db.insert(checklistItemsTable).values(parsed.data).returning();
+  res.status(201).json(UpdateChecklistItemResponse.parse(item));
+});
+
 router.patch("/checklist/:id", async (req, res): Promise<void> => {
   const params = UpdateChecklistItemParams.safeParse(req.params);
   if (!params.success) {
@@ -114,6 +131,14 @@ router.patch("/checklist/:id", async (req, res): Promise<void> => {
     return;
   }
   res.json(UpdateChecklistItemResponse.parse(item));
+});
+
+router.delete("/checklist/:id", async (req, res): Promise<void> => {
+  const params = DeleteChecklistItemParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [item] = await db.delete(checklistItemsTable).where(eq(checklistItemsTable.id, params.data.id)).returning();
+  if (!item) { res.status(404).json({ error: "Checklist item not found" }); return; }
+  res.sendStatus(204);
 });
 
 export default router;

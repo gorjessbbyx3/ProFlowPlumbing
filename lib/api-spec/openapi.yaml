@@ -177,6 +177,21 @@ paths:
                 $ref: "#/components/schemas/Shift"
 
   /shifts/{id}:
+    get:
+      operationId: getShift
+      tags: [shifts]
+      summary: Get a shift by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Shift"
+        "404":
+          description: Not found
     patch:
       operationId: updateShift
       tags: [shifts]
@@ -478,6 +493,21 @@ paths:
                 $ref: "#/components/schemas/Receipt"
 
   /receipts/{id}:
+    get:
+      operationId: getReceipt
+      tags: [receipts]
+      summary: Get a receipt by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Receipt"
+        "404":
+          description: Not found
     put:
       operationId: updateReceipt
       tags: [receipts]
@@ -553,6 +583,21 @@ paths:
                 $ref: "#/components/schemas/Expense"
 
   /expenses/{id}:
+    get:
+      operationId: getExpense
+      tags: [expenses]
+      summary: Get an expense by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Expense"
+        "404":
+          description: Not found
     patch:
       operationId: updateExpense
       tags: [expenses]
@@ -628,6 +673,21 @@ paths:
                 $ref: "#/components/schemas/LaborEntry"
 
   /labor-entries/{id}:
+    get:
+      operationId: getLaborEntry
+      tags: [labor]
+      summary: Get a labor entry by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LaborEntry"
+        "404":
+          description: Not found
     patch:
       operationId: updateLaborEntry
       tags: [labor]
@@ -690,6 +750,21 @@ paths:
                 $ref: "#/components/schemas/Todo"
 
   /todos/{id}:
+    get:
+      operationId: getTodo
+      tags: [todos]
+      summary: Get a todo by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Todo"
+        "404":
+          description: Not found
     patch:
       operationId: updateTodo
       tags: [todos]
@@ -752,6 +827,21 @@ paths:
                 $ref: "#/components/schemas/Followup"
 
   /followups/{id}:
+    get:
+      operationId: getFollowup
+      tags: [followups]
+      summary: Get a followup by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Followup"
+        "404":
+          description: Not found
     patch:
       operationId: updateFollowup
       tags: [followups]
@@ -814,6 +904,21 @@ paths:
                 $ref: "#/components/schemas/Campaign"
 
   /campaigns/{id}:
+    get:
+      operationId: getCampaign
+      tags: [campaigns]
+      summary: Get a campaign by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Campaign"
+        "404":
+          description: Not found
     patch:
       operationId: updateCampaign
       tags: [campaigns]
@@ -857,8 +962,40 @@ paths:
                 type: array
                 items:
                   $ref: "#/components/schemas/ChecklistItem"
+    post:
+      operationId: createChecklistItem
+      tags: [checklist]
+      summary: Create a checklist item
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateChecklistItemBody"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
 
   /checklist/{id}:
+    get:
+      operationId: getChecklistItem
+      tags: [checklist]
+      summary: Get a checklist item by ID
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ChecklistItem"
+        "404":
+          description: Not found
     patch:
       operationId: updateChecklistItem
       tags: [checklist]
@@ -878,6 +1015,15 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ChecklistItem"
+    delete:
+      operationId: deleteChecklistItem
+      tags: [checklist]
+      summary: Delete a checklist item
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "204":
+          description: Deleted
 
   /reports/tax-summary:
     get:
@@ -1664,6 +1810,19 @@ components:
           type: string
           format: date-time
       required: [id, category, title, completed, sortOrder, createdAt, updatedAt]
+
+    CreateChecklistItemBody:
+      type: object
+      properties:
+        category:
+          type: string
+        title:
+          type: string
+        description:
+          type: ["string", "null"]
+        sortOrder:
+          type: integer
+      required: [category, title]
 
     UpdateChecklistItemBody:
       type: object

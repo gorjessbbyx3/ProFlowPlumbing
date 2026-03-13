@@ -17,6 +17,14 @@ router.get("/campaigns", async (_req, res): Promise<void> => {
   res.json(ListCampaignsResponse.parse(campaigns));
 });
 
+router.get("/campaigns/:id", async (req, res): Promise<void> => {
+  const params = UpdateCampaignParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [campaign] = await db.select().from(campaignsTable).where(eq(campaignsTable.id, params.data.id));
+  if (!campaign) { res.status(404).json({ error: "Campaign not found" }); return; }
+  res.json(UpdateCampaignResponse.parse(campaign));
+});
+
 router.post("/campaigns", async (req, res): Promise<void> => {
   const parsed = CreateCampaignBody.safeParse(req.body);
   if (!parsed.success) {

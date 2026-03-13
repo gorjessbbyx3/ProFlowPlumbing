@@ -17,6 +17,14 @@ router.get("/followups", async (_req, res): Promise<void> => {
   res.json(ListFollowupsResponse.parse(followups));
 });
 
+router.get("/followups/:id", async (req, res): Promise<void> => {
+  const params = UpdateFollowupParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [followup] = await db.select().from(followupsTable).where(eq(followupsTable.id, params.data.id));
+  if (!followup) { res.status(404).json({ error: "Follow-up not found" }); return; }
+  res.json(UpdateFollowupResponse.parse(followup));
+});
+
 router.post("/followups", async (req, res): Promise<void> => {
   const parsed = CreateFollowupBody.safeParse(req.body);
   if (!parsed.success) {

@@ -30,6 +30,14 @@ router.get("/shifts", async (req, res): Promise<void> => {
   res.json(ListShiftsResponse.parse(shifts));
 });
 
+router.get("/shifts/:id", async (req, res): Promise<void> => {
+  const params = UpdateShiftParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [shift] = await db.select().from(shiftsTable).where(eq(shiftsTable.id, params.data.id));
+  if (!shift) { res.status(404).json({ error: "Shift not found" }); return; }
+  res.json(UpdateShiftResponse.parse(shift));
+});
+
 router.post("/shifts", async (req, res): Promise<void> => {
   const parsed = CreateShiftBody.safeParse(req.body);
   if (!parsed.success) {

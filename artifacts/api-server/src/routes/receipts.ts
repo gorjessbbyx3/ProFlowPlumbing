@@ -16,6 +16,14 @@ router.get("/receipts", async (_req, res): Promise<void> => {
   res.json(ListReceiptsResponse.parse(receipts));
 });
 
+router.get("/receipts/:id", async (req, res): Promise<void> => {
+  const params = UpdateReceiptParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [receipt] = await db.select().from(receiptsTable).where(eq(receiptsTable.id, params.data.id));
+  if (!receipt) { res.status(404).json({ error: "Receipt not found" }); return; }
+  res.json(receipt);
+});
+
 router.post("/receipts", async (req, res): Promise<void> => {
   const parsed = CreateReceiptBody.safeParse(req.body);
   if (!parsed.success) {

@@ -17,6 +17,14 @@ router.get("/todos", async (_req, res): Promise<void> => {
   res.json(ListTodosResponse.parse(todos));
 });
 
+router.get("/todos/:id", async (req, res): Promise<void> => {
+  const params = UpdateTodoParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [todo] = await db.select().from(todosTable).where(eq(todosTable.id, params.data.id));
+  if (!todo) { res.status(404).json({ error: "Todo not found" }); return; }
+  res.json(UpdateTodoResponse.parse(todo));
+});
+
 router.post("/todos", async (req, res): Promise<void> => {
   const parsed = CreateTodoBody.safeParse(req.body);
   if (!parsed.success) {

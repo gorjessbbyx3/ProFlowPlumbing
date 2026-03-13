@@ -30,6 +30,14 @@ router.get("/labor-entries", async (req, res): Promise<void> => {
   res.json(ListLaborEntriesResponse.parse(entries));
 });
 
+router.get("/labor-entries/:id", async (req, res): Promise<void> => {
+  const params = UpdateLaborEntryParams.safeParse(req.params);
+  if (!params.success) { res.status(400).json({ error: params.error.message }); return; }
+  const [entry] = await db.select().from(laborEntriesTable).where(eq(laborEntriesTable.id, params.data.id));
+  if (!entry) { res.status(404).json({ error: "Labor entry not found" }); return; }
+  res.json(UpdateLaborEntryResponse.parse(entry));
+});
+
 router.post("/labor-entries", async (req, res): Promise<void> => {
   const parsed = CreateLaborEntryBody.safeParse(req.body);
   if (!parsed.success) {
