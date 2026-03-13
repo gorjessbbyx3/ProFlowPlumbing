@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useListReceipts, useCreateReceipt, useDeleteReceipt } from "@workspace/api-client-react";
+import type { ListReceiptsQueryResult } from "@workspace/api-client-react";
 import { getListReceiptsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Trash2, X, Receipt } from "lucide-react";
+
+type ReceiptItem = ListReceiptsQueryResult[number];
 
 export default function Receipts() {
   const queryClient = useQueryClient();
@@ -18,7 +21,7 @@ export default function Receipts() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createReceipt.mutate(
-      { data: { ...form, invoiceId: form.invoiceId ? parseInt(form.invoiceId) : undefined } as any },
+      { data: { amount: form.amount, paymentMethod: form.paymentMethod, paymentDate: form.paymentDate, notes: form.notes || undefined, invoiceId: form.invoiceId ? parseInt(form.invoiceId) : undefined } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListReceiptsQueryKey() });
@@ -89,7 +92,7 @@ export default function Receipts() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {receipts.map((r: any) => (
+          {receipts.map((r: ReceiptItem) => (
             <Card key={r.id} className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">

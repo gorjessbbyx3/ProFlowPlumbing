@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useListCampaigns, useCreateCampaign, useUpdateCampaign, useDeleteCampaign } from "@workspace/api-client-react";
+import type { ListCampaignsQueryResult } from "@workspace/api-client-react";
 import { getListCampaignsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency, getStatusColor } from "@/lib/utils";
 import { Plus, Trash2, X, Megaphone } from "lucide-react";
+
+type CampaignItem = ListCampaignsQueryResult[number];
 
 const TYPES = ["Flyer", "Social Media", "Email", "Promotion", "Outreach", "Referral", "Other"];
 const STATUSES = ["planned", "active", "completed"];
@@ -22,7 +25,7 @@ export default function Campaigns() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createCampaign.mutate(
-      { data: form },
+      { data: { name: form.name, type: form.type, status: form.status || undefined, startDate: form.startDate || undefined, endDate: form.endDate || undefined, budget: form.budget || undefined, targetAudience: form.targetAudience || undefined, description: form.description || undefined, notes: form.notes || undefined } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListCampaignsQueryKey() });
@@ -110,7 +113,7 @@ export default function Campaigns() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {campaigns.map((c: any) => (
+          {campaigns.map((c: CampaignItem) => (
             <Card key={c.id} className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">

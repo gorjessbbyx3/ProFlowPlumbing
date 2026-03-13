@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useListFollowups, useCreateFollowup, useUpdateFollowup, useDeleteFollowup } from "@workspace/api-client-react";
+import type { ListFollowupsQueryResult } from "@workspace/api-client-react";
 import { getListFollowupsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { getStatusColor } from "@/lib/utils";
 import { Plus, Trash2, X, PhoneCall } from "lucide-react";
+
+type FollowupItem = ListFollowupsQueryResult[number];
 
 const STATUSES = ["pending", "contacted", "converted", "lost"];
 
@@ -21,7 +24,7 @@ export default function Followups() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createFollowup.mutate(
-      { data: form },
+      { data: { clientName: form.clientName, reason: form.reason, dueDate: form.dueDate, clientPhone: form.clientPhone || undefined, clientEmail: form.clientEmail || undefined, status: form.status || undefined, notes: form.notes || undefined } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListFollowupsQueryKey() });
@@ -99,7 +102,7 @@ export default function Followups() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {followups.map((f: any) => (
+          {followups.map((f: FollowupItem) => (
             <Card key={f.id} className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">

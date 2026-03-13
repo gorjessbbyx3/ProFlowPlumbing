@@ -1,11 +1,14 @@
 import React, { useState } from "react";
 import { useListExpenses, useCreateExpense, useUpdateExpense, useDeleteExpense } from "@workspace/api-client-react";
+import type { ListExpensesQueryResult } from "@workspace/api-client-react";
 import { getListExpensesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency, getStatusColor } from "@/lib/utils";
-import { Plus, Trash2, X, DollarSign, Pencil } from "lucide-react";
+import { Plus, Trash2, X, DollarSign } from "lucide-react";
+
+type ExpenseItem = ListExpensesQueryResult[number];
 
 const CATEGORIES = ["Supplies", "Fuel", "Equipment", "Insurance", "Marketing", "Vehicle", "Office", "Other"];
 
@@ -23,7 +26,7 @@ export default function Expenses() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     createExpense.mutate(
-      { data: form },
+      { data: { category: form.category, description: form.description, amount: form.amount, date: form.date, vendor: form.vendor || undefined, notes: form.notes || undefined } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListExpensesQueryKey() });
@@ -40,7 +43,7 @@ export default function Expenses() {
     }
   };
 
-  const totalExpenses = expenses?.reduce((sum: number, e: any) => sum + parseFloat(e.amount || "0"), 0) || 0;
+  const totalExpenses = expenses?.reduce((sum: number, e: ExpenseItem) => sum + parseFloat(e.amount || "0"), 0) || 0;
 
   return (
     <div className="space-y-6">
@@ -104,7 +107,7 @@ export default function Expenses() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {expenses.map((e: any) => (
+          {expenses.map((e: ExpenseItem) => (
             <Card key={e.id} className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center">

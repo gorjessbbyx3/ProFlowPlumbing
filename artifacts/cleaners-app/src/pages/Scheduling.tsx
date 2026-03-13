@@ -5,8 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/Layout";
 import { Card, Button, Modal, FormField, Badge } from "@/components/ui";
 import { formatDate } from "@/lib/utils";
-import { Plus, Clock, User, FileText, Trash2, Edit } from "lucide-react";
-import type { Shift } from "@workspace/api-client-react";
+import { Plus, Clock, User, FileText, Trash2, Edit, CalendarDays } from "lucide-react";
+import type { ListShiftsQueryResult } from "@workspace/api-client-react";
+
+type Shift = ListShiftsQueryResult[number];
 
 export default function Scheduling() {
   const queryClient = useQueryClient();

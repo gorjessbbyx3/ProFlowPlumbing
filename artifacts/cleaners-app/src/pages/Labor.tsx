@@ -1,11 +1,15 @@
 import React, { useState } from "react";
 import { useListLaborEntries, useCreateLaborEntry, useDeleteLaborEntry, useListEmployees } from "@workspace/api-client-react";
+import type { ListLaborEntriesQueryResult, ListEmployeesQueryResult } from "@workspace/api-client-react";
 import { getListLaborEntriesQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency } from "@/lib/utils";
 import { Plus, Trash2, X, Clock } from "lucide-react";
+
+type LaborItem = ListLaborEntriesQueryResult[number];
+type EmployeeItem = ListEmployeesQueryResult[number];
 
 export default function Labor() {
   const queryClient = useQueryClient();
@@ -29,7 +33,7 @@ export default function Labor() {
     e.preventDefault();
     const totalPay = form.totalPay || calcTotal(form.hoursWorked, form.hourlyRate);
     createEntry.mutate(
-      { data: { ...form, employeeId: parseInt(form.employeeId), bookingId: form.bookingId ? parseInt(form.bookingId) : undefined, totalPay } as any },
+      { data: { employeeId: parseInt(form.employeeId), bookingId: form.bookingId ? parseInt(form.bookingId) : undefined, date: form.date, hoursWorked: form.hoursWorked, hourlyRate: form.hourlyRate, totalPay, description: form.description || undefined } },
       {
         onSuccess: () => {
           queryClient.invalidateQueries({ queryKey: getListLaborEntriesQueryKey() });
@@ -46,8 +50,8 @@ export default function Labor() {
     }
   };
 
-  const totalLabor = entries?.reduce((sum: number, e: any) => sum + parseFloat(e.totalPay || "0"), 0) || 0;
-  const totalHours = entries?.reduce((sum: number, e: any) => sum + parseFloat(e.hoursWorked || "0"), 0) || 0;
+  const totalLabor = entries?.reduce((sum: number, entry: LaborItem) => sum + parseFloat(entry.totalPay || "0"), 0) || 0;
+  const totalHours = entries?.reduce((sum: number, entry: LaborItem) => sum + parseFloat(entry.hoursWorked || "0"), 0) || 0;
 
   return (
     <div className="space-y-6">
@@ -56,7 +60,7 @@ export default function Labor() {
       <div className="flex flex-wrap gap-3">
         <select value={filterEmployee} onChange={e => setFilterEmployee(e.target.value)} className="border rounded-lg px-3 py-2 text-sm">
           <option value="">All Employees</option>
-          {employees?.map((emp: any) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+          {employees?.map((emp: EmployeeItem) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
         </select>
         <input type="date" value={startDate} onChange={e => setStartDate(e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
         <input type="date" value={endDate} onChange={e => setEndDate(e.target.value)} className="border rounded-lg px-3 py-2 text-sm" />
@@ -73,7 +77,7 @@ export default function Labor() {
               <label className="block text-sm font-medium text-slate-700 mb-1">Employee *</label>
               <select required value={form.employeeId} onChange={e => setForm({ ...form, employeeId: e.target.value })} className="w-full border rounded-lg px-3 py-2">
                 <option value="">Select Employee</option>
-                {employees?.map((emp: any) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
+                {employees?.map((emp: EmployeeItem) => <option key={emp.id} value={emp.id}>{emp.name}</option>)}
               </select>
             </div>
             <div>
@@ -116,22 +120,22 @@ export default function Labor() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {entries.map((e: any) => {
-            const empName = employees?.find((emp: any) => emp.id === e.employeeId)?.name || `Employee #${e.employeeId}`;
+          {entries.map((entry: LaborItem) => {
+            const empName = employees?.find((emp: EmployeeItem) => emp.id === entry.employeeId)?.name || `Employee #${entry.employeeId}`;
             return (
-              <Card key={e.id} className="p-4 flex items-center justify-between">
+              <Card key={entry.id} className="p-4 flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
                     <Clock className="w-5 h-5 text-blue-600" />
                   </div>
                   <div>
                     <p className="font-semibold">{empName}</p>
-                    <p className="text-sm text-slate-500">{e.date} &middot; {e.hoursWorked}hrs @ {formatCurrency(e.hourlyRate)}/hr{e.description ? ` · ${e.description}` : ""}</p>
+                    <p className="text-sm text-slate-500">{entry.date} &middot; {entry.hoursWorked}hrs @ {formatCurrency(entry.hourlyRate)}/hr{entry.description ? ` · ${entry.description}` : ""}</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="font-semibold text-blue-600">{formatCurrency(e.totalPay)}</span>
-                  <button onClick={() => handleDelete(e.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
+                  <span className="font-semibold text-blue-600">{formatCurrency(entry.totalPay)}</span>
+                  <button onClick={() => handleDelete(entry.id)} className="text-rose-500 hover:text-rose-700"><Trash2 className="w-4 h-4" /></button>
                 </div>
               </Card>
             );
