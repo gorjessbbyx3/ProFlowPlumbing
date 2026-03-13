@@ -8,7 +8,7 @@ export const invoicesTable = pgTable("invoices", {
   id: serial("id").primaryKey(),
   bookingId: integer("booking_id").references(() => bookingsTable.id, { onDelete: "set null" }),
   clientId: integer("client_id").references(() => clientsTable.id, { onDelete: "set null" }),
-  invoiceNumber: text("invoice_number").notNull(),
+  invoiceNumber: text("invoice_number").notNull().unique(),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   tax: numeric("tax", { precision: 10, scale: 2 }).notNull().default("0"),
   total: numeric("total", { precision: 10, scale: 2 }).notNull(),
