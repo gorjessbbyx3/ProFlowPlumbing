@@ -1033,6 +1033,8 @@ components:
     UpdateShiftBody:
       type: object
       properties:
+        employeeId:
+          type: integer
         date:
           type: string
         startTime:
@@ -1253,6 +1255,12 @@ components:
     UpdateInvoiceBody:
       type: object
       properties:
+        invoiceNumber:
+          type: string
+        clientName:
+          type: string
+        bookingId:
+          type: integer
         status:
           type: string
         paidDate:
@@ -1427,6 +1435,10 @@ components:
     UpdateLaborEntryBody:
       type: object
       properties:
+        employeeId:
+          type: integer
+        bookingId:
+          type: integer
         date:
           type: string
         hoursWorked:

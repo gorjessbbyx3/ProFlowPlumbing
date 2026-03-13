@@ -136,6 +136,7 @@ export const UpdateShiftParams = zod.object({
 });
 
 export const UpdateShiftBody = zod.object({
+  employeeId: zod.number().optional(),
   date: zod.string().optional(),
   startTime: zod.string().optional(),
   endTime: zod.string().optional(),
@@ -428,6 +429,9 @@ export const UpdateInvoiceParams = zod.object({
 });
 
 export const UpdateInvoiceBody = zod.object({
+  invoiceNumber: zod.string().optional(),
+  clientName: zod.string().optional(),
+  bookingId: zod.number().optional(),
   status: zod.string().optional(),
   paidDate: zod.string().nullish(),
   amount: zod.string().optional(),
@@ -633,6 +637,8 @@ export const UpdateLaborEntryParams = zod.object({
 });
 
 export const UpdateLaborEntryBody = zod.object({
+  employeeId: zod.number().optional(),
+  bookingId: zod.number().optional(),
   date: zod.string().optional(),
   hoursWorked: zod.string().optional(),
   hourlyRate: zod.string().optional(),
