@@ -1,30 +1,32 @@
 import React, { useState } from "react";
-import { useListBookings, useListEmployees, useListClients, useCreateBooking, useUpdateBooking, useDeleteBooking } from "@workspace/api-client-react";
+import { useListBookings, useListEmployees, useListClients, useCreateBooking, useUpdateBooking, useDeleteBooking, useGenerateRecurringBookings } from "@workspace/api-client-react";
 import { getListBookingsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/Layout";
 import { Card, Button, Modal, FormField, Badge } from "@/components/ui";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Edit2, Trash2, Plus, Calendar as CalendarIcon, MapPin, Anchor, Car, Home } from "lucide-react";
+import { Edit2, Trash2, Plus, Calendar as CalendarIcon, MapPin, Anchor, Car, Home, Camera, Repeat } from "lucide-react";
 import type { Booking } from "@workspace/api-client-react";
+import BookingPhotos from "@/components/BookingPhotos";
 
 export default function Bookings() {
   const queryClient = useQueryClient();
   const { data: bookings, isLoading } = useListBookings();
   const { data: employees } = useListEmployees();
   const { data: clients } = useListClients();
-  
+
   const createMutation = useCreateBooking();
   const updateMutation = useUpdateBooking();
   const deleteMutation = useDeleteBooking();
+  const generateRecurring = useGenerateRecurringBookings();
 
   const [modalState, setModalState] = useState<{ isOpen: boolean; booking?: Booking }>({ isOpen: false });
+  const [photoBookingId, setPhotoBookingId] = useState<number | null>(null);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
-    
-    // Auto-fill client info if a client was selected
+
     const clientId = formData.get("clientId") as string;
     let clientInfo = { name: formData.get("clientName") as string, phone: formData.get("clientPhone") as string, email: formData.get("clientEmail") as string };
     if (clientId) {
@@ -32,7 +34,9 @@ export default function Bookings() {
       if (c) clientInfo = { name: c.name, phone: c.phone || "", email: c.email || "" };
     }
 
-    const data = {
+    const recurrenceFrequency = formData.get("recurrenceFrequency") as string;
+
+    const data: any = {
       clientId: clientId ? parseInt(clientId, 10) : undefined,
       employeeId: formData.get("employeeId") ? parseInt(formData.get("employeeId") as string, 10) : undefined,
       serviceType: formData.get("serviceType") as string,
@@ -45,6 +49,8 @@ export default function Bookings() {
       clientName: clientInfo.name,
       clientPhone: clientInfo.phone,
       clientEmail: clientInfo.email,
+      recurrenceFrequency: recurrenceFrequency || undefined,
+      recurrenceEndDate: formData.get("recurrenceEndDate") as string || undefined,
     };
 
     if (modalState.booking) {
@@ -55,9 +61,33 @@ export default function Bookings() {
     } else {
       createMutation.mutate(
         { data },
-        { onSuccess: () => { queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() }); setModalState({ isOpen: false }); } }
+        {
+          onSuccess: (newBooking: any) => {
+            queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
+            // Auto-generate recurring if frequency set
+            if (recurrenceFrequency && newBooking?.id) {
+              generateRecurring.mutate(
+                { id: newBooking.id },
+                { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() }) }
+              );
+            }
+            setModalState({ isOpen: false });
+          },
+        }
       );
     }
+  };
+
+  const handleGenerateRecurring = (bookingId: number) => {
+    generateRecurring.mutate(
+      { id: bookingId },
+      {
+        onSuccess: (data: any) => {
+          queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() });
+          alert(`Generated ${data?.length || 0} future bookings!`);
+        },
+      }
+    );
   };
 
   const getServiceIcon = (type: string) => {
@@ -69,10 +99,10 @@ export default function Bookings() {
 
   return (
     <div className="animate-fade-in pb-12">
-      <PageHeader 
-        title="Bookings" 
+      <PageHeader
+        title="Bookings"
         description="Manage client jobs and service appointments."
-        action={<Button onClick={() => setModalState({ isOpen: true })}><Plus className="w-4 h-4 mr-2"/> New Booking</Button>}
+        action={<Button onClick={() => setModalState({ isOpen: true })}><Plus className="w-4 h-4 mr-2"/> Book a Job</Button>}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -88,7 +118,17 @@ export default function Bookings() {
             <Card key={booking.id} className="flex flex-col group relative">
               <div className="p-5 border-b border-border/50 flex justify-between items-start bg-slate-50/50">
                 <div>
-                  <Badge className={getStatusColor(booking.status)}>{booking.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(booking.status)}>{booking.status}</Badge>
+                    {booking.recurrenceFrequency && (
+                      <Badge className="bg-violet-100 text-violet-700 border-violet-200 flex items-center gap-1">
+                        <Repeat className="w-3 h-3" /> {booking.recurrenceFrequency}
+                      </Badge>
+                    )}
+                    {booking.parentBookingId && (
+                      <Badge className="bg-slate-100 text-slate-500 border-slate-200 text-[10px]">recurring</Badge>
+                    )}
+                  </div>
                   <h3 className="text-xl font-bold text-slate-900 mt-2">{booking.clientName}</h3>
                   <p className="text-sm text-slate-500 font-medium flex items-center gap-1.5 mt-1">
                     {getServiceIcon(booking.serviceType)} {booking.serviceType}
@@ -98,7 +138,7 @@ export default function Bookings() {
                   <p className="text-lg font-black text-primary">{formatCurrency(booking.estimatedPrice)}</p>
                 </div>
               </div>
-              
+
               <div className="p-5 space-y-3 flex-1">
                 <div className="flex items-center gap-3 text-sm text-slate-600">
                   <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
@@ -109,7 +149,7 @@ export default function Bookings() {
                     <p>{booking.time}</p>
                   </div>
                 </div>
-                
+
                 {booking.location && (
                   <div className="flex items-center gap-3 text-sm text-slate-600">
                     <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
@@ -118,7 +158,7 @@ export default function Bookings() {
                     <p className="truncate" title={booking.location}>{booking.location}</p>
                   </div>
                 )}
-                
+
                 {booking.employeeId && (
                   <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-border/50 text-sm">
                     <span className="font-semibold text-slate-700">Assigned: </span>
@@ -126,12 +166,20 @@ export default function Bookings() {
                   </div>
                 )}
               </div>
-              
-              <div className="p-4 border-t border-border/50 bg-slate-50/50 flex gap-2 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button variant="outline" className="h-9 px-3 text-xs" onClick={() => setModalState({ isOpen: true, booking })}>
-                  <Edit2 className="w-4 h-4 mr-2" /> Edit
+
+              <div className="p-4 border-t border-border/50 bg-slate-50/50 flex gap-2 justify-end">
+                <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setPhotoBookingId(booking.id)}>
+                  <Camera className="w-4 h-4 mr-1" /> Photos
                 </Button>
-                <Button variant="destructive" className="h-9 px-3 text-xs" onClick={() => { if(confirm('Delete booking?')) deleteMutation.mutate({ id: booking.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() })}) }}>
+                {booking.recurrenceFrequency && (
+                  <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => handleGenerateRecurring(booking.id)} disabled={generateRecurring.isPending}>
+                    <Repeat className="w-4 h-4 mr-1" /> Generate
+                  </Button>
+                )}
+                <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setModalState({ isOpen: true, booking })}>
+                  <Edit2 className="w-4 h-4 mr-1" /> Edit
+                </Button>
+                <Button variant="destructive" className="h-10 px-3 text-xs" onClick={() => { if(confirm('Delete booking?')) deleteMutation.mutate({ id: booking.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() })}) }}>
                   <Trash2 className="w-4 h-4" />
                 </Button>
               </div>
@@ -140,10 +188,15 @@ export default function Bookings() {
         )}
       </div>
 
-      <Modal 
-        isOpen={modalState.isOpen} 
-        onClose={() => setModalState({ isOpen: false })} 
-        title={modalState.booking ? "Edit Booking" : "New Booking"}
+      {/* Photo Modal */}
+      {photoBookingId && (
+        <BookingPhotos bookingId={photoBookingId} onClose={() => setPhotoBookingId(null)} />
+      )}
+
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ isOpen: false })}
+        title={modalState.booking ? "Edit Booking" : "Book a Job"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -180,7 +233,24 @@ export default function Bookings() {
           <FormField label="Location" name="location" defaultValue={modalState.booking?.location || ""} />
           <FormField label="Estimated Price ($)" name="estimatedPrice" type="number" defaultValue={modalState.booking?.estimatedPrice || ""} />
           <FormField label="Notes" name="notes" type="textarea" defaultValue={modalState.booking?.notes || ""} />
-          
+
+          {/* Recurring Section */}
+          <div className="p-4 bg-violet-50 border border-violet-100 rounded-2xl space-y-3">
+            <div className="flex items-center gap-2 mb-1">
+              <Repeat className="w-4 h-4 text-violet-600" />
+              <h4 className="font-bold text-violet-800 text-sm">Recurring Booking</h4>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <FormField label="Repeat" name="recurrenceFrequency" type="select" defaultValue={modalState.booking?.recurrenceFrequency || ""} options={[
+                { label: "No repeat", value: "" },
+                { label: "Weekly", value: "weekly" },
+                { label: "Every 2 weeks", value: "biweekly" },
+                { label: "Monthly", value: "monthly" },
+              ]} />
+              <FormField label="Until (optional)" name="recurrenceEndDate" type="date" defaultValue={modalState.booking?.recurrenceEndDate || ""} />
+            </div>
+          </div>
+
           <div className="pt-4 flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={() => setModalState({ isOpen: false })}>Cancel</Button>
             <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>Save Booking</Button>

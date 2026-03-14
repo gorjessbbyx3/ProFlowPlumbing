@@ -27,4 +27,12 @@ export interface UpdateBookingBody {
   clientPhone?: string | null;
   /** @nullable */
   clientEmail?: string | null;
+  /** @nullable */
+  recurrenceFrequency?: string | null;
+  /** @nullable */
+  recurrenceEndDate?: string | null;
+  /** @nullable */
+  latitude?: string | null;
+  /** @nullable */
+  longitude?: string | null;
 }

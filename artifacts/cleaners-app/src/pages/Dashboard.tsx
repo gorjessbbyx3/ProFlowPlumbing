@@ -92,12 +92,14 @@ function ProgressRing({ percent, size = 56, stroke = 5, color = "text-primary" }
 }
 
 const quickActions = [
-  { label: "New Booking", icon: CalendarDays, href: "/bookings", gradient: "from-blue-500 to-blue-600" },
-  { label: "Add Invoice", icon: FileText, href: "/invoices", gradient: "from-amber-500 to-orange-500" },
+  { label: "Book a Job", icon: CalendarDays, href: "/bookings", gradient: "from-blue-500 to-blue-600" },
+  { label: "Create Invoice", icon: FileText, href: "/invoices", gradient: "from-amber-500 to-orange-500" },
   { label: "Log Expense", icon: DollarSign, href: "/expenses", gradient: "from-rose-500 to-pink-500" },
-  { label: "Add Task", icon: ClipboardList, href: "/todos", gradient: "from-emerald-500 to-green-600" },
-  { label: "New Receipt", icon: Receipt, href: "/receipts", gradient: "from-teal-500 to-cyan-500" },
-  { label: "Follow-Up", icon: PhoneCall, href: "/followups", gradient: "from-violet-500 to-purple-600" },
+  { label: "Add a Task", icon: ClipboardList, href: "/todos", gradient: "from-emerald-500 to-green-600" },
+  { label: "Save Receipt", icon: Receipt, href: "/receipts", gradient: "from-teal-500 to-cyan-500" },
+  { label: "Follow Up", icon: PhoneCall, href: "/followups", gradient: "from-violet-500 to-purple-600" },
+  { label: "Add to PO", icon: ClipboardList, href: "/purchase-orders", gradient: "from-cyan-500 to-teal-500" },
+  { label: "Job Map", icon: MapPin, href: "/map", gradient: "from-indigo-500 to-blue-500" },
 ];
 
 export default function Dashboard() {
@@ -169,7 +171,7 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600", trend: "+2 this week" },
+    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600", trend: "scheduled today" },
     { title: "Outstanding", value: stats?.pendingInvoices || 0, icon: FileText, gradient: "from-amber-500 to-orange-500", bgLight: "bg-amber-50", textColor: "text-amber-600", trend: "invoices unpaid" },
     { title: "Revenue", value: formatCurrency(stats?.totalRevenue), icon: TrendingUp, gradient: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50", textColor: "text-emerald-600", trend: "total earned" },
     { title: "Team", value: stats?.activeEmployees || 0, icon: Users, gradient: "from-purple-500 to-violet-600", bgLight: "bg-purple-50", textColor: "text-purple-600", trend: "active members" },
@@ -211,22 +213,22 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <img src={logo} alt="808 All Purpose Cleaners" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
+              <img src={logo} alt="All Purpose Cleaners" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
             </div>
           </div>
 
           {/* Quick Actions - embedded in hero */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2 mt-6">
+          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 mt-6">
             {quickActions.map((action) => (
               <button
                 key={action.label}
                 onClick={() => navigate(action.href)}
-                className="flex flex-col items-center gap-1.5 p-3 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all duration-300 group"
+                className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all duration-300 group"
               >
                 <div className={cn("p-2 rounded-xl bg-gradient-to-br shadow-lg group-hover:scale-110 transition-transform", action.gradient)}>
                   <action.icon className="w-4 h-4 text-white" />
                 </div>
-                <span className="text-[11px] font-semibold text-white/80 group-hover:text-white transition-colors">{action.label}</span>
+                <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">{action.label}</span>
               </button>
             ))}
           </div>

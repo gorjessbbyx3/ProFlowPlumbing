@@ -7,12 +7,15 @@
  */
 
 export * from "./booking";
+export * from "./bookingPhoto";
 export * from "./campaign";
 export * from "./categoryTotal";
 export * from "./checklistItem";
 export * from "./client";
 export * from "./createBookingBody";
+export * from "./createBookingBodyRecurrenceFrequency";
 export * from "./createCampaignBody";
+export * from "./createChecklistItemBody";
 export * from "./createClientBody";
 export * from "./createEmployeeBody";
 export * from "./createExpenseBody";
@@ -51,3 +54,5 @@ export * from "./updateLaborEntryBody";
 export * from "./updateReceiptBody";
 export * from "./updateShiftBody";
 export * from "./updateTodoBody";
+export * from "./uploadBookingPhotoBody";
+export * from "./uploadBookingPhotoBodyType";

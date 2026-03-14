@@ -380,6 +380,86 @@ paths:
         "204":
           description: Deleted
 
+
+  /bookings/{id}/photos:
+    get:
+      operationId: listBookingPhotos
+      tags: [bookings]
+      summary: List photos for a booking
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: List of photos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BookingPhoto"
+    post:
+      operationId: uploadBookingPhoto
+      tags: [bookings]
+      summary: Upload a photo for a booking
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                photo:
+                  type: string
+                  format: binary
+                type:
+                  type: string
+                  enum: [before, after]
+                caption:
+                  type: string
+              required: [photo, type]
+      responses:
+        "201":
+          description: Photo uploaded
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BookingPhoto"
+
+  /bookings/{id}/photos/{photoId}:
+    delete:
+      operationId: deleteBookingPhoto
+      tags: [bookings]
+      summary: Delete a booking photo
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+        - name: photoId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /bookings/{id}/generate-recurring:
+    post:
+      operationId: generateRecurringBookings
+      tags: [bookings]
+      summary: Generate future bookings from a recurring template
+      parameters:
+        - $ref: "#/components/parameters/IdParam"
+      responses:
+        "200":
+          description: Generated bookings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Booking"
+
   /invoices:
     get:
       operationId: listInvoices
@@ -1277,6 +1357,16 @@ components:
         updatedAt:
           type: string
           format: date-time
+        recurrenceFrequency:
+          type: ["string", "null"]
+        recurrenceEndDate:
+          type: ["string", "null"]
+        parentBookingId:
+          type: ["integer", "null"]
+        latitude:
+          type: ["string", "null"]
+        longitude:
+          type: ["string", "null"]
       required: [id, serviceType, status, date, time, createdAt, updatedAt]
 
     CreateBookingBody:
@@ -1306,6 +1396,15 @@ components:
           type: string
         clientEmail:
           type: string
+        recurrenceFrequency:
+          type: string
+          enum: [weekly, biweekly, monthly]
+        recurrenceEndDate:
+          type: string
+        latitude:
+          type: string
+        longitude:
+          type: string
       required: [serviceType, date, time]
 
     UpdateBookingBody:
@@ -1334,6 +1433,15 @@ components:
         clientPhone:
           type: ["string", "null"]
         clientEmail:
+          type: ["string", "null"]
+
+        recurrenceFrequency:
+          type: ["string", "null"]
+        recurrenceEndDate:
+          type: ["string", "null"]
+        latitude:
+          type: ["string", "null"]
+        longitude:
           type: ["string", "null"]
 
     Invoice:
@@ -1882,3 +1990,21 @@ components:
           items:
             $ref: "#/components/schemas/Booking"
       required: [todayBookings, pendingInvoices, totalRevenue, activeEmployees, pendingTodos, pendingFollowups, recentBookings]
+
+    BookingPhoto:
+      type: object
+      properties:
+        id:
+          type: integer
+        bookingId:
+          type: integer
+        type:
+          type: string
+        filePath:
+          type: string
+        caption:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+          format: date-time
+      required: [id, bookingId, type, filePath, createdAt]

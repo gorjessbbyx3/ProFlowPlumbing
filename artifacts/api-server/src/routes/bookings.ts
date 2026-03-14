@@ -89,3 +89,55 @@ router.delete("/bookings/:id", async (req, res): Promise<void> => {
 });
 
 export default router;
+
+// Generate recurring bookings from a template
+router.post("/bookings/:id/generate-recurring", async (req, res): Promise<void> => {
+  const bookingId = Number(req.params.id);
+  if (isNaN(bookingId)) { res.status(400).json({ error: "Invalid ID" }); return; }
+
+  const [source] = await db.select().from(bookingsTable).where(eq(bookingsTable.id, bookingId));
+  if (!source) { res.status(404).json({ error: "Booking not found" }); return; }
+  if (!source.recurrenceFrequency) { res.status(400).json({ error: "Booking has no recurrence set" }); return; }
+
+  const freq = source.recurrenceFrequency;
+  const endDate = source.recurrenceEndDate ? new Date(source.recurrenceEndDate) : null;
+  const horizon = endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 3 months default
+
+  const daysToAdd = freq === "weekly" ? 7 : freq === "biweekly" ? 14 : 30;
+  const created = [];
+  let currentDate = new Date(source.date);
+
+  // Find existing child bookings to avoid duplicates
+  const existing = await db.select().from(bookingsTable).where(eq(bookingsTable.parentBookingId, bookingId));
+  const existingDates = new Set(existing.map(b => b.date));
+
+  for (let i = 0; i < 52; i++) {
+    currentDate = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+    if (currentDate > horizon) break;
+
+    const dateStr = currentDate.toISOString().split("T")[0]!;
+    if (existingDates.has(dateStr)) continue;
+
+    const [newBooking] = await db.insert(bookingsTable).values({
+      clientId: source.clientId,
+      employeeId: source.employeeId,
+      serviceType: source.serviceType,
+      status: "scheduled",
+      date: dateStr,
+      time: source.time,
+      location: source.location,
+      notes: source.notes,
+      estimatedPrice: source.estimatedPrice,
+      clientName: source.clientName,
+      clientPhone: source.clientPhone,
+      clientEmail: source.clientEmail,
+      recurrenceFrequency: null,
+      parentBookingId: bookingId,
+      latitude: source.latitude,
+      longitude: source.longitude,
+    }).returning();
+    created.push(newBooking);
+  }
+
+  res.json(created);
+});

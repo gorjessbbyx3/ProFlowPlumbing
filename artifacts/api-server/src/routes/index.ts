@@ -4,6 +4,7 @@ import employeesRouter from "./employees";
 import shiftsRouter from "./shifts";
 import clientsRouter from "./clients";
 import bookingsRouter from "./bookings";
+import bookingPhotosRouter from "./bookingPhotos";
 import invoicesRouter from "./invoices";
 import receiptsRouter from "./receipts";
 import expensesRouter from "./expenses";
@@ -13,6 +14,8 @@ import followupsRouter from "./followups";
 import campaignsRouter from "./campaigns";
 import checklistRouter from "./checklist";
 import reportsRouter from "./reports";
+import inventoryRouter from "./inventory";
+import purchaseOrdersRouter from "./purchaseOrders";
 
 const router: IRouter = Router();
 
@@ -21,6 +24,7 @@ router.use(employeesRouter);
 router.use(shiftsRouter);
 router.use(clientsRouter);
 router.use(bookingsRouter);
+router.use(bookingPhotosRouter);
 router.use(invoicesRouter);
 router.use(receiptsRouter);
 router.use(expensesRouter);
@@ -30,5 +34,7 @@ router.use(followupsRouter);
 router.use(campaignsRouter);
 router.use(checklistRouter);
 router.use(reportsRouter);
+router.use(inventoryRouter);
+router.use(purchaseOrdersRouter);
 
 export default router;

@@ -30,4 +30,14 @@ export interface Booking {
   clientEmail?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  /** @nullable */
+  recurrenceFrequency?: string | null;
+  /** @nullable */
+  recurrenceEndDate?: string | null;
+  /** @nullable */
+  parentBookingId?: number | null;
+  /** @nullable */
+  latitude?: string | null;
+  /** @nullable */
+  longitude?: string | null;
 }

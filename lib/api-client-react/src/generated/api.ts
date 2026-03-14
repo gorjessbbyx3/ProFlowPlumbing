@@ -18,11 +18,13 @@ import type {
 
 import type {
   Booking,
+  BookingPhoto,
   Campaign,
   ChecklistItem,
   Client,
   CreateBookingBody,
   CreateCampaignBody,
+  CreateChecklistItemBody,
   CreateClientBody,
   CreateEmployeeBody,
   CreateExpenseBody,
@@ -61,6 +63,7 @@ import type {
   UpdateReceiptBody,
   UpdateShiftBody,
   UpdateTodoBody,
+  UploadBookingPhotoBody,
 } from "./api.schemas";
 
 import { customFetch } from "../custom-fetch";
@@ -745,6 +748,91 @@ export const useCreateShift = <
 > => {
   return useMutation(getCreateShiftMutationOptions(options));
 };
+
+/**
+ * @summary Get a shift by ID
+ */
+export const getGetShiftUrl = (id: number) => {
+  return `/api/shifts/${id}`;
+};
+
+export const getShift = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Shift> => {
+  return customFetch<Shift>(getGetShiftUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetShiftQueryKey = (id: number) => {
+  return [`/api/shifts/${id}`] as const;
+};
+
+export const getGetShiftQueryOptions = <
+  TData = Awaited<ReturnType<typeof getShift>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getShift>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetShiftQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getShift>>> = ({
+    signal,
+  }) => getShift(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getShift>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetShiftQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getShift>>
+>;
+export type GetShiftQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a shift by ID
+ */
+
+export function useGetShift<
+  TData = Awaited<ReturnType<typeof getShift>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getShift>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetShiftQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Update a shift
@@ -1771,6 +1859,355 @@ export const useDeleteBooking = <
 };
 
 /**
+ * @summary List photos for a booking
+ */
+export const getListBookingPhotosUrl = (id: number) => {
+  return `/api/bookings/${id}/photos`;
+};
+
+export const listBookingPhotos = async (
+  id: number,
+  options?: RequestInit,
+): Promise<BookingPhoto[]> => {
+  return customFetch<BookingPhoto[]>(getListBookingPhotosUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getListBookingPhotosQueryKey = (id: number) => {
+  return [`/api/bookings/${id}/photos`] as const;
+};
+
+export const getListBookingPhotosQueryOptions = <
+  TData = Awaited<ReturnType<typeof listBookingPhotos>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listBookingPhotos>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getListBookingPhotosQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof listBookingPhotos>>
+  > = ({ signal }) => listBookingPhotos(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof listBookingPhotos>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type ListBookingPhotosQueryResult = NonNullable<
+  Awaited<ReturnType<typeof listBookingPhotos>>
+>;
+export type ListBookingPhotosQueryError = ErrorType<unknown>;
+
+/**
+ * @summary List photos for a booking
+ */
+
+export function useListBookingPhotos<
+  TData = Awaited<ReturnType<typeof listBookingPhotos>>,
+  TError = ErrorType<unknown>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof listBookingPhotos>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getListBookingPhotosQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
+ * @summary Upload a photo for a booking
+ */
+export const getUploadBookingPhotoUrl = (id: number) => {
+  return `/api/bookings/${id}/photos`;
+};
+
+export const uploadBookingPhoto = async (
+  id: number,
+  uploadBookingPhotoBody: UploadBookingPhotoBody,
+  options?: RequestInit,
+): Promise<BookingPhoto> => {
+  const formData = new FormData();
+  formData.append(`photo`, uploadBookingPhotoBody.photo);
+  formData.append(`type`, uploadBookingPhotoBody.type);
+  if (uploadBookingPhotoBody.caption !== undefined) {
+    formData.append(`caption`, uploadBookingPhotoBody.caption);
+  }
+
+  return customFetch<BookingPhoto>(getUploadBookingPhotoUrl(id), {
+    ...options,
+    method: "POST",
+    body: formData,
+  });
+};
+
+export const getUploadBookingPhotoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadBookingPhoto>>,
+    TError,
+    { id: number; data: BodyType<UploadBookingPhotoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof uploadBookingPhoto>>,
+  TError,
+  { id: number; data: BodyType<UploadBookingPhotoBody> },
+  TContext
+> => {
+  const mutationKey = ["uploadBookingPhoto"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof uploadBookingPhoto>>,
+    { id: number; data: BodyType<UploadBookingPhotoBody> }
+  > = (props) => {
+    const { id, data } = props ?? {};
+
+    return uploadBookingPhoto(id, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UploadBookingPhotoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof uploadBookingPhoto>>
+>;
+export type UploadBookingPhotoMutationBody = BodyType<UploadBookingPhotoBody>;
+export type UploadBookingPhotoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Upload a photo for a booking
+ */
+export const useUploadBookingPhoto = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof uploadBookingPhoto>>,
+    TError,
+    { id: number; data: BodyType<UploadBookingPhotoBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof uploadBookingPhoto>>,
+  TError,
+  { id: number; data: BodyType<UploadBookingPhotoBody> },
+  TContext
+> => {
+  return useMutation(getUploadBookingPhotoMutationOptions(options));
+};
+
+/**
+ * @summary Delete a booking photo
+ */
+export const getDeleteBookingPhotoUrl = (id: number, photoId: number) => {
+  return `/api/bookings/${id}/photos/${photoId}`;
+};
+
+export const deleteBookingPhoto = async (
+  id: number,
+  photoId: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteBookingPhotoUrl(id, photoId), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteBookingPhotoMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBookingPhoto>>,
+    TError,
+    { id: number; photoId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteBookingPhoto>>,
+  TError,
+  { id: number; photoId: number },
+  TContext
+> => {
+  const mutationKey = ["deleteBookingPhoto"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteBookingPhoto>>,
+    { id: number; photoId: number }
+  > = (props) => {
+    const { id, photoId } = props ?? {};
+
+    return deleteBookingPhoto(id, photoId, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteBookingPhotoMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteBookingPhoto>>
+>;
+
+export type DeleteBookingPhotoMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a booking photo
+ */
+export const useDeleteBookingPhoto = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteBookingPhoto>>,
+    TError,
+    { id: number; photoId: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteBookingPhoto>>,
+  TError,
+  { id: number; photoId: number },
+  TContext
+> => {
+  return useMutation(getDeleteBookingPhotoMutationOptions(options));
+};
+
+/**
+ * @summary Generate future bookings from a recurring template
+ */
+export const getGenerateRecurringBookingsUrl = (id: number) => {
+  return `/api/bookings/${id}/generate-recurring`;
+};
+
+export const generateRecurringBookings = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Booking[]> => {
+  return customFetch<Booking[]>(getGenerateRecurringBookingsUrl(id), {
+    ...options,
+    method: "POST",
+  });
+};
+
+export const getGenerateRecurringBookingsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateRecurringBookings>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof generateRecurringBookings>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["generateRecurringBookings"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof generateRecurringBookings>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return generateRecurringBookings(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type GenerateRecurringBookingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof generateRecurringBookings>>
+>;
+
+export type GenerateRecurringBookingsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Generate future bookings from a recurring template
+ */
+export const useGenerateRecurringBookings = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof generateRecurringBookings>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof generateRecurringBookings>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getGenerateRecurringBookingsMutationOptions(options));
+};
+
+/**
  * @summary List invoices
  */
 export const getListInvoicesUrl = (params?: ListInvoicesParams) => {
@@ -2370,6 +2807,93 @@ export const useCreateReceipt = <
 };
 
 /**
+ * @summary Get a receipt by ID
+ */
+export const getGetReceiptUrl = (id: number) => {
+  return `/api/receipts/${id}`;
+};
+
+export const getReceipt = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Receipt> => {
+  return customFetch<Receipt>(getGetReceiptUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetReceiptQueryKey = (id: number) => {
+  return [`/api/receipts/${id}`] as const;
+};
+
+export const getGetReceiptQueryOptions = <
+  TData = Awaited<ReturnType<typeof getReceipt>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getReceipt>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetReceiptQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getReceipt>>> = ({
+    signal,
+  }) => getReceipt(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getReceipt>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetReceiptQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getReceipt>>
+>;
+export type GetReceiptQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a receipt by ID
+ */
+
+export function useGetReceipt<
+  TData = Awaited<ReturnType<typeof getReceipt>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getReceipt>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetReceiptQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Update a receipt
  */
 export const getUpdateReceiptUrl = (id: number) => {
@@ -2719,6 +3243,93 @@ export const useCreateExpense = <
 > => {
   return useMutation(getCreateExpenseMutationOptions(options));
 };
+
+/**
+ * @summary Get an expense by ID
+ */
+export const getGetExpenseUrl = (id: number) => {
+  return `/api/expenses/${id}`;
+};
+
+export const getExpense = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Expense> => {
+  return customFetch<Expense>(getGetExpenseUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetExpenseQueryKey = (id: number) => {
+  return [`/api/expenses/${id}`] as const;
+};
+
+export const getGetExpenseQueryOptions = <
+  TData = Awaited<ReturnType<typeof getExpense>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExpense>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetExpenseQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getExpense>>> = ({
+    signal,
+  }) => getExpense(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getExpense>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetExpenseQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getExpense>>
+>;
+export type GetExpenseQueryError = ErrorType<void>;
+
+/**
+ * @summary Get an expense by ID
+ */
+
+export function useGetExpense<
+  TData = Awaited<ReturnType<typeof getExpense>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getExpense>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetExpenseQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Update an expense
@@ -3075,6 +3686,93 @@ export const useCreateLaborEntry = <
 };
 
 /**
+ * @summary Get a labor entry by ID
+ */
+export const getGetLaborEntryUrl = (id: number) => {
+  return `/api/labor-entries/${id}`;
+};
+
+export const getLaborEntry = async (
+  id: number,
+  options?: RequestInit,
+): Promise<LaborEntry> => {
+  return customFetch<LaborEntry>(getGetLaborEntryUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetLaborEntryQueryKey = (id: number) => {
+  return [`/api/labor-entries/${id}`] as const;
+};
+
+export const getGetLaborEntryQueryOptions = <
+  TData = Awaited<ReturnType<typeof getLaborEntry>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLaborEntry>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetLaborEntryQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getLaborEntry>>> = ({
+    signal,
+  }) => getLaborEntry(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getLaborEntry>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetLaborEntryQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getLaborEntry>>
+>;
+export type GetLaborEntryQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a labor entry by ID
+ */
+
+export function useGetLaborEntry<
+  TData = Awaited<ReturnType<typeof getLaborEntry>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getLaborEntry>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetLaborEntryQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Update a labor entry
  */
 export const getUpdateLaborEntryUrl = (id: number) => {
@@ -3395,6 +4093,83 @@ export const useCreateTodo = <
 > => {
   return useMutation(getCreateTodoMutationOptions(options));
 };
+
+/**
+ * @summary Get a todo by ID
+ */
+export const getGetTodoUrl = (id: number) => {
+  return `/api/todos/${id}`;
+};
+
+export const getTodo = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Todo> => {
+  return customFetch<Todo>(getGetTodoUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetTodoQueryKey = (id: number) => {
+  return [`/api/todos/${id}`] as const;
+};
+
+export const getGetTodoQueryOptions = <
+  TData = Awaited<ReturnType<typeof getTodo>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTodo>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetTodoQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getTodo>>> = ({
+    signal,
+  }) => getTodo(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<Awaited<ReturnType<typeof getTodo>>, TError, TData> & {
+    queryKey: QueryKey;
+  };
+};
+
+export type GetTodoQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getTodo>>
+>;
+export type GetTodoQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a todo by ID
+ */
+
+export function useGetTodo<
+  TData = Awaited<ReturnType<typeof getTodo>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<Awaited<ReturnType<typeof getTodo>>, TError, TData>;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetTodoQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 /**
  * @summary Update a todo
@@ -3729,6 +4504,93 @@ export const useCreateFollowup = <
 };
 
 /**
+ * @summary Get a followup by ID
+ */
+export const getGetFollowupUrl = (id: number) => {
+  return `/api/followups/${id}`;
+};
+
+export const getFollowup = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Followup> => {
+  return customFetch<Followup>(getGetFollowupUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetFollowupQueryKey = (id: number) => {
+  return [`/api/followups/${id}`] as const;
+};
+
+export const getGetFollowupQueryOptions = <
+  TData = Awaited<ReturnType<typeof getFollowup>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getFollowup>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetFollowupQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getFollowup>>> = ({
+    signal,
+  }) => getFollowup(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getFollowup>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetFollowupQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getFollowup>>
+>;
+export type GetFollowupQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a followup by ID
+ */
+
+export function useGetFollowup<
+  TData = Awaited<ReturnType<typeof getFollowup>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getFollowup>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetFollowupQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Update a followup
  */
 export const getUpdateFollowupUrl = (id: number) => {
@@ -4061,6 +4923,93 @@ export const useCreateCampaign = <
 };
 
 /**
+ * @summary Get a campaign by ID
+ */
+export const getGetCampaignUrl = (id: number) => {
+  return `/api/campaigns/${id}`;
+};
+
+export const getCampaign = async (
+  id: number,
+  options?: RequestInit,
+): Promise<Campaign> => {
+  return customFetch<Campaign>(getGetCampaignUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetCampaignQueryKey = (id: number) => {
+  return [`/api/campaigns/${id}`] as const;
+};
+
+export const getGetCampaignQueryOptions = <
+  TData = Awaited<ReturnType<typeof getCampaign>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCampaign>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetCampaignQueryKey(id);
+
+  const queryFn: QueryFunction<Awaited<ReturnType<typeof getCampaign>>> = ({
+    signal,
+  }) => getCampaign(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getCampaign>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetCampaignQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getCampaign>>
+>;
+export type GetCampaignQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a campaign by ID
+ */
+
+export function useGetCampaign<
+  TData = Awaited<ReturnType<typeof getCampaign>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getCampaign>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetCampaignQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Update a campaign
  */
 export const getUpdateCampaignUrl = (id: number) => {
@@ -4307,6 +5256,179 @@ export function useListChecklistItems<
 }
 
 /**
+ * @summary Create a checklist item
+ */
+export const getCreateChecklistItemUrl = () => {
+  return `/api/checklist`;
+};
+
+export const createChecklistItem = async (
+  createChecklistItemBody: CreateChecklistItemBody,
+  options?: RequestInit,
+): Promise<ChecklistItem> => {
+  return customFetch<ChecklistItem>(getCreateChecklistItemUrl(), {
+    ...options,
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(createChecklistItemBody),
+  });
+};
+
+export const getCreateChecklistItemMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createChecklistItem>>,
+    TError,
+    { data: BodyType<CreateChecklistItemBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof createChecklistItem>>,
+  TError,
+  { data: BodyType<CreateChecklistItemBody> },
+  TContext
+> => {
+  const mutationKey = ["createChecklistItem"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof createChecklistItem>>,
+    { data: BodyType<CreateChecklistItemBody> }
+  > = (props) => {
+    const { data } = props ?? {};
+
+    return createChecklistItem(data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type CreateChecklistItemMutationResult = NonNullable<
+  Awaited<ReturnType<typeof createChecklistItem>>
+>;
+export type CreateChecklistItemMutationBody = BodyType<CreateChecklistItemBody>;
+export type CreateChecklistItemMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Create a checklist item
+ */
+export const useCreateChecklistItem = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof createChecklistItem>>,
+    TError,
+    { data: BodyType<CreateChecklistItemBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof createChecklistItem>>,
+  TError,
+  { data: BodyType<CreateChecklistItemBody> },
+  TContext
+> => {
+  return useMutation(getCreateChecklistItemMutationOptions(options));
+};
+
+/**
+ * @summary Get a checklist item by ID
+ */
+export const getGetChecklistItemUrl = (id: number) => {
+  return `/api/checklist/${id}`;
+};
+
+export const getChecklistItem = async (
+  id: number,
+  options?: RequestInit,
+): Promise<ChecklistItem> => {
+  return customFetch<ChecklistItem>(getGetChecklistItemUrl(id), {
+    ...options,
+    method: "GET",
+  });
+};
+
+export const getGetChecklistItemQueryKey = (id: number) => {
+  return [`/api/checklist/${id}`] as const;
+};
+
+export const getGetChecklistItemQueryOptions = <
+  TData = Awaited<ReturnType<typeof getChecklistItem>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getChecklistItem>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+) => {
+  const { query: queryOptions, request: requestOptions } = options ?? {};
+
+  const queryKey = queryOptions?.queryKey ?? getGetChecklistItemQueryKey(id);
+
+  const queryFn: QueryFunction<
+    Awaited<ReturnType<typeof getChecklistItem>>
+  > = ({ signal }) => getChecklistItem(id, { signal, ...requestOptions });
+
+  return {
+    queryKey,
+    queryFn,
+    enabled: !!id,
+    ...queryOptions,
+  } as UseQueryOptions<
+    Awaited<ReturnType<typeof getChecklistItem>>,
+    TError,
+    TData
+  > & { queryKey: QueryKey };
+};
+
+export type GetChecklistItemQueryResult = NonNullable<
+  Awaited<ReturnType<typeof getChecklistItem>>
+>;
+export type GetChecklistItemQueryError = ErrorType<void>;
+
+/**
+ * @summary Get a checklist item by ID
+ */
+
+export function useGetChecklistItem<
+  TData = Awaited<ReturnType<typeof getChecklistItem>>,
+  TError = ErrorType<void>,
+>(
+  id: number,
+  options?: {
+    query?: UseQueryOptions<
+      Awaited<ReturnType<typeof getChecklistItem>>,
+      TError,
+      TData
+    >;
+    request?: SecondParameter<typeof customFetch>;
+  },
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+  const queryOptions = getGetChecklistItemQueryOptions(id, options);
+
+  const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+    queryKey: QueryKey;
+  };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+/**
  * @summary Toggle or update a checklist item
  */
 export const getUpdateChecklistItemUrl = (id: number) => {
@@ -4391,6 +5513,90 @@ export const useUpdateChecklistItem = <
   TContext
 > => {
   return useMutation(getUpdateChecklistItemMutationOptions(options));
+};
+
+/**
+ * @summary Delete a checklist item
+ */
+export const getDeleteChecklistItemUrl = (id: number) => {
+  return `/api/checklist/${id}`;
+};
+
+export const deleteChecklistItem = async (
+  id: number,
+  options?: RequestInit,
+): Promise<void> => {
+  return customFetch<void>(getDeleteChecklistItemUrl(id), {
+    ...options,
+    method: "DELETE",
+  });
+};
+
+export const getDeleteChecklistItemMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteChecklistItem>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof deleteChecklistItem>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  const mutationKey = ["deleteChecklistItem"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof deleteChecklistItem>>,
+    { id: number }
+  > = (props) => {
+    const { id } = props ?? {};
+
+    return deleteChecklistItem(id, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type DeleteChecklistItemMutationResult = NonNullable<
+  Awaited<ReturnType<typeof deleteChecklistItem>>
+>;
+
+export type DeleteChecklistItemMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Delete a checklist item
+ */
+export const useDeleteChecklistItem = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof deleteChecklistItem>>,
+    TError,
+    { id: number },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof deleteChecklistItem>>,
+  TError,
+  { id: number },
+  TContext
+> => {
+  return useMutation(getDeleteChecklistItemMutationOptions(options));
 };
 
 /**

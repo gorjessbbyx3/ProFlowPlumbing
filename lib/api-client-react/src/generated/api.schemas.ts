@@ -64,6 +64,7 @@ export interface CreateShiftBody {
 }
 
 export interface UpdateShiftBody {
+  employeeId?: number;
   date?: string;
   startTime?: string;
   endTime?: string;
@@ -130,7 +131,26 @@ export interface Booking {
   clientEmail?: string | null;
   createdAt: string;
   updatedAt: string;
+  /** @nullable */
+  recurrenceFrequency?: string | null;
+  /** @nullable */
+  recurrenceEndDate?: string | null;
+  /** @nullable */
+  parentBookingId?: number | null;
+  /** @nullable */
+  latitude?: string | null;
+  /** @nullable */
+  longitude?: string | null;
 }
+
+export type CreateBookingBodyRecurrenceFrequency =
+  (typeof CreateBookingBodyRecurrenceFrequency)[keyof typeof CreateBookingBodyRecurrenceFrequency];
+
+export const CreateBookingBodyRecurrenceFrequency = {
+  weekly: "weekly",
+  biweekly: "biweekly",
+  monthly: "monthly",
+} as const;
 
 export interface CreateBookingBody {
   clientId?: number;
@@ -145,6 +165,10 @@ export interface CreateBookingBody {
   clientName?: string;
   clientPhone?: string;
   clientEmail?: string;
+  recurrenceFrequency?: CreateBookingBodyRecurrenceFrequency;
+  recurrenceEndDate?: string;
+  latitude?: string;
+  longitude?: string;
 }
 
 export interface UpdateBookingBody {
@@ -168,6 +192,14 @@ export interface UpdateBookingBody {
   clientPhone?: string | null;
   /** @nullable */
   clientEmail?: string | null;
+  /** @nullable */
+  recurrenceFrequency?: string | null;
+  /** @nullable */
+  recurrenceEndDate?: string | null;
+  /** @nullable */
+  latitude?: string | null;
+  /** @nullable */
+  longitude?: string | null;
 }
 
 export interface Invoice {
@@ -208,6 +240,9 @@ export interface CreateInvoiceBody {
 }
 
 export interface UpdateInvoiceBody {
+  invoiceNumber?: string;
+  clientName?: string;
+  bookingId?: number;
   status?: string;
   /** @nullable */
   paidDate?: string | null;
@@ -309,6 +344,8 @@ export interface CreateLaborEntryBody {
 }
 
 export interface UpdateLaborEntryBody {
+  employeeId?: number;
+  bookingId?: number;
   date?: string;
   hoursWorked?: string;
   hourlyRate?: string;
@@ -450,6 +487,14 @@ export interface ChecklistItem {
   updatedAt: string;
 }
 
+export interface CreateChecklistItemBody {
+  category: string;
+  title: string;
+  /** @nullable */
+  description?: string | null;
+  sortOrder?: number;
+}
+
 export interface UpdateChecklistItemBody {
   completed?: boolean;
 }
@@ -480,6 +525,16 @@ export interface DashboardStats {
   recentBookings: Booking[];
 }
 
+export interface BookingPhoto {
+  id: number;
+  bookingId: number;
+  type: string;
+  filePath: string;
+  /** @nullable */
+  caption?: string | null;
+  createdAt: string;
+}
+
 export type ListShiftsParams = {
   employeeId?: number;
   startDate?: string;
@@ -489,6 +544,20 @@ export type ListShiftsParams = {
 export type ListBookingsParams = {
   status?: string;
   date?: string;
+};
+
+export type UploadBookingPhotoBodyType =
+  (typeof UploadBookingPhotoBodyType)[keyof typeof UploadBookingPhotoBodyType];
+
+export const UploadBookingPhotoBodyType = {
+  before: "before",
+  after: "after",
+} as const;
+
+export type UploadBookingPhotoBody = {
+  photo: Blob;
+  type: UploadBookingPhotoBodyType;
+  caption?: string;
 };
 
 export type ListInvoicesParams = {

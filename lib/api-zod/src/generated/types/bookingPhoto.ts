@@ -6,11 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UpdateShiftBody {
-  employeeId?: number;
-  date?: string;
-  startTime?: string;
-  endTime?: string;
+export interface BookingPhoto {
+  id: number;
+  bookingId: number;
+  type: string;
+  filePath: string;
   /** @nullable */
-  notes?: string | null;
+  caption?: string | null;
+  createdAt: Date;
 }

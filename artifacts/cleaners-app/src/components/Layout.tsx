@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { 
-  LayoutDashboard, Users, CalendarDays, BookOpenCheck, 
-  BriefcaseBusiness, FileText, ReceiptText, CreditCard, 
+import {
+  LayoutDashboard, Users, CalendarDays, BookOpenCheck,
+  BriefcaseBusiness, FileText, CreditCard,
   Clock, CheckSquare, PhoneCall, Megaphone, LineChart,
-  Menu, X
+  Menu, X, Package, ClipboardList
 } from "lucide-react";
 import logo from "@assets/Untitled-1_1773440534890.png";
 import { cn } from "@/lib/utils";
@@ -12,12 +12,13 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Bookings", href: "/bookings", icon: BookOpenCheck },
-  { name: "Scheduling", href: "/scheduling", icon: CalendarDays },
+  { name: "Schedule & Map", href: "/scheduling", icon: CalendarDays },
   { name: "Employees", href: "/employees", icon: Users },
   { name: "Clients", href: "/clients", icon: BriefcaseBusiness },
   { name: "Invoices", href: "/invoices", icon: FileText },
-  { name: "Receipts", href: "/receipts", icon: ReceiptText },
-  { name: "Expenses", href: "/expenses", icon: CreditCard },
+  { name: "Receipts & Expenses", href: "/money", icon: CreditCard },
+  { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
+  { name: "Inventory", href: "/inventory", icon: Package },
   { name: "Labor Tracker", href: "/labor", icon: Clock },
   { name: "To-Do List", href: "/todos", icon: CheckSquare },
   { name: "Follow-ups", href: "/followups", icon: PhoneCall },
@@ -33,9 +34,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-slate-50 flex overflow-hidden selection:bg-primary/20">
       {/* Mobile Sidebar Overlay */}
       {mobileMenuOpen && (
-        <div 
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden" 
-          onClick={() => setMobileMenuOpen(false)} 
+        <div
+          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
@@ -46,10 +47,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
       )}>
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="808 All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
+            <img src={logo} alt="All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
             <div>
-              <h1 className="font-display font-bold text-primary leading-tight text-lg">808 All Purpose</h1>
-              <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Cleaners</p>
+              <h1 className="font-display font-bold text-primary leading-tight text-lg">All Purpose Cleaners</h1>
+              <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
             </div>
           </div>
           <button className="lg:hidden text-slate-400 hover:text-slate-700" onClick={() => setMobileMenuOpen(false)}>
@@ -61,14 +62,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
           {navItems.map((item) => {
             const isActive = location === item.href;
             return (
-              <Link 
-                key={item.name} 
+              <Link
+                key={item.name}
                 href={item.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group",
-                  isActive 
-                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20" 
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20"
                     : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
                 )}
               >
@@ -78,7 +79,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             );
           })}
         </nav>
-        
+
         <div className="p-4 border-t border-slate-100 m-3 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10">
           <p className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Admin Panel</p>
           <p className="text-sm text-slate-600 font-medium truncate">Lainecaldera@aol.com</p>
@@ -92,7 +93,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center px-4 justify-between sticky top-0 z-30">
           <div className="flex items-center gap-3">
             <img src={logo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain rounded" />
-            <span className="font-display font-bold text-primary">808 Cleaners</span>
+            <span className="font-display font-bold text-primary">All Purpose Cleaners</span>
           </div>
           <button onClick={() => setMobileMenuOpen(true)} className="p-2 -mr-2 rounded-xl text-slate-500 hover:bg-slate-100">
             <Menu className="w-6 h-6" />

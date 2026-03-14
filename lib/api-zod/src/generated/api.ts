@@ -129,6 +129,24 @@ export const CreateShiftBody = zod.object({
 });
 
 /**
+ * @summary Get a shift by ID
+ */
+export const GetShiftParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetShiftResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  date: zod.string(),
+  startTime: zod.string(),
+  endTime: zod.string(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Update a shift
  */
 export const UpdateShiftParams = zod.object({
@@ -262,6 +280,11 @@ export const ListBookingsResponseItem = zod.object({
   clientEmail: zod.string().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
+  recurrenceFrequency: zod.string().nullish(),
+  recurrenceEndDate: zod.string().nullish(),
+  parentBookingId: zod.number().nullish(),
+  latitude: zod.string().nullish(),
+  longitude: zod.string().nullish(),
 });
 export const ListBookingsResponse = zod.array(ListBookingsResponseItem);
 
@@ -281,6 +304,10 @@ export const CreateBookingBody = zod.object({
   clientName: zod.string().optional(),
   clientPhone: zod.string().optional(),
   clientEmail: zod.string().optional(),
+  recurrenceFrequency: zod.enum(["weekly", "biweekly", "monthly"]).optional(),
+  recurrenceEndDate: zod.string().optional(),
+  latitude: zod.string().optional(),
+  longitude: zod.string().optional(),
 });
 
 /**
@@ -306,6 +333,11 @@ export const GetBookingResponse = zod.object({
   clientEmail: zod.string().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
+  recurrenceFrequency: zod.string().nullish(),
+  recurrenceEndDate: zod.string().nullish(),
+  parentBookingId: zod.number().nullish(),
+  latitude: zod.string().nullish(),
+  longitude: zod.string().nullish(),
 });
 
 /**
@@ -328,6 +360,10 @@ export const UpdateBookingBody = zod.object({
   clientName: zod.string().nullish(),
   clientPhone: zod.string().nullish(),
   clientEmail: zod.string().nullish(),
+  recurrenceFrequency: zod.string().nullish(),
+  recurrenceEndDate: zod.string().nullish(),
+  latitude: zod.string().nullish(),
+  longitude: zod.string().nullish(),
 });
 
 export const UpdateBookingResponse = zod.object({
@@ -346,6 +382,11 @@ export const UpdateBookingResponse = zod.object({
   clientEmail: zod.string().nullish(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
+  recurrenceFrequency: zod.string().nullish(),
+  recurrenceEndDate: zod.string().nullish(),
+  parentBookingId: zod.number().nullish(),
+  latitude: zod.string().nullish(),
+  longitude: zod.string().nullish(),
 });
 
 /**
@@ -354,6 +395,79 @@ export const UpdateBookingResponse = zod.object({
 export const DeleteBookingParams = zod.object({
   id: zod.coerce.number(),
 });
+
+/**
+ * @summary List photos for a booking
+ */
+export const ListBookingPhotosParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const ListBookingPhotosResponseItem = zod.object({
+  id: zod.number(),
+  bookingId: zod.number(),
+  type: zod.string(),
+  filePath: zod.string(),
+  caption: zod.string().nullish(),
+  createdAt: zod.date(),
+});
+export const ListBookingPhotosResponse = zod.array(
+  ListBookingPhotosResponseItem,
+);
+
+/**
+ * @summary Upload a photo for a booking
+ */
+export const UploadBookingPhotoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const UploadBookingPhotoBody = zod.object({
+  photo: zod.instanceof(File),
+  type: zod.enum(["before", "after"]),
+  caption: zod.string().optional(),
+});
+
+/**
+ * @summary Delete a booking photo
+ */
+export const DeleteBookingPhotoParams = zod.object({
+  id: zod.coerce.number(),
+  photoId: zod.coerce.number(),
+});
+
+/**
+ * @summary Generate future bookings from a recurring template
+ */
+export const GenerateRecurringBookingsParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GenerateRecurringBookingsResponseItem = zod.object({
+  id: zod.number(),
+  clientId: zod.number().nullish(),
+  employeeId: zod.number().nullish(),
+  serviceType: zod.string(),
+  status: zod.string(),
+  date: zod.string(),
+  time: zod.string(),
+  location: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  estimatedPrice: zod.string().nullish(),
+  clientName: zod.string().nullish(),
+  clientPhone: zod.string().nullish(),
+  clientEmail: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+  recurrenceFrequency: zod.string().nullish(),
+  recurrenceEndDate: zod.string().nullish(),
+  parentBookingId: zod.number().nullish(),
+  latitude: zod.string().nullish(),
+  longitude: zod.string().nullish(),
+});
+export const GenerateRecurringBookingsResponse = zod.array(
+  GenerateRecurringBookingsResponseItem,
+);
 
 /**
  * @summary List invoices
@@ -492,6 +606,24 @@ export const CreateReceiptBody = zod.object({
 });
 
 /**
+ * @summary Get a receipt by ID
+ */
+export const GetReceiptParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetReceiptResponse = zod.object({
+  id: zod.number(),
+  invoiceId: zod.number().nullish(),
+  amount: zod.string(),
+  paymentMethod: zod.string(),
+  paymentDate: zod.string(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Update a receipt
  */
 export const UpdateReceiptParams = zod.object({
@@ -556,6 +688,25 @@ export const CreateExpenseBody = zod.object({
   date: zod.string(),
   vendor: zod.string().optional(),
   notes: zod.string().optional(),
+});
+
+/**
+ * @summary Get an expense by ID
+ */
+export const GetExpenseParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetExpenseResponse = zod.object({
+  id: zod.number(),
+  category: zod.string(),
+  description: zod.string(),
+  amount: zod.string(),
+  date: zod.string(),
+  vendor: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
 });
 
 /**
@@ -630,6 +781,26 @@ export const CreateLaborEntryBody = zod.object({
 });
 
 /**
+ * @summary Get a labor entry by ID
+ */
+export const GetLaborEntryParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetLaborEntryResponse = zod.object({
+  id: zod.number(),
+  employeeId: zod.number(),
+  bookingId: zod.number().nullish(),
+  date: zod.string(),
+  hoursWorked: zod.string(),
+  hourlyRate: zod.string(),
+  totalPay: zod.string(),
+  description: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Update a labor entry
  */
 export const UpdateLaborEntryParams = zod.object({
@@ -693,6 +864,24 @@ export const CreateTodoBody = zod.object({
 });
 
 /**
+ * @summary Get a todo by ID
+ */
+export const GetTodoParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetTodoResponse = zod.object({
+  id: zod.number(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  priority: zod.string(),
+  dueDate: zod.string().nullish(),
+  completed: zod.boolean(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Update a todo
  */
 export const UpdateTodoParams = zod.object({
@@ -753,6 +942,26 @@ export const CreateFollowupBody = zod.object({
   dueDate: zod.string(),
   status: zod.string().optional(),
   notes: zod.string().optional(),
+});
+
+/**
+ * @summary Get a followup by ID
+ */
+export const GetFollowupParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetFollowupResponse = zod.object({
+  id: zod.number(),
+  clientName: zod.string(),
+  clientPhone: zod.string().nullish(),
+  clientEmail: zod.string().nullish(),
+  reason: zod.string(),
+  dueDate: zod.string(),
+  status: zod.string(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
 });
 
 /**
@@ -827,6 +1036,28 @@ export const CreateCampaignBody = zod.object({
 });
 
 /**
+ * @summary Get a campaign by ID
+ */
+export const GetCampaignParams = zod.object({
+  id: zod.coerce.number(),
+});
+
+export const GetCampaignResponse = zod.object({
+  id: zod.number(),
+  name: zod.string(),
+  type: zod.string(),
+  status: zod.string(),
+  startDate: zod.string().nullish(),
+  endDate: zod.string().nullish(),
+  budget: zod.string().nullish(),
+  targetAudience: zod.string().nullish(),
+  description: zod.string().nullish(),
+  notes: zod.string().nullish(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
  * @summary Update a campaign
  */
 export const UpdateCampaignParams = zod.object({
@@ -885,7 +1116,7 @@ export const ListChecklistItemsResponse = zod.array(
 );
 
 /**
- * @summary Toggle or update a checklist item
+ * @summary Create a checklist item
  */
 export const CreateChecklistItemBody = zod.object({
   category: zod.string(),
@@ -894,11 +1125,28 @@ export const CreateChecklistItemBody = zod.object({
   sortOrder: zod.number().optional(),
 });
 
-export const UpdateChecklistItemParams = zod.object({
+/**
+ * @summary Get a checklist item by ID
+ */
+export const GetChecklistItemParams = zod.object({
   id: zod.coerce.number(),
 });
 
-export const DeleteChecklistItemParams = zod.object({
+export const GetChecklistItemResponse = zod.object({
+  id: zod.number(),
+  category: zod.string(),
+  title: zod.string(),
+  description: zod.string().nullish(),
+  completed: zod.boolean(),
+  sortOrder: zod.number(),
+  createdAt: zod.date(),
+  updatedAt: zod.date(),
+});
+
+/**
+ * @summary Toggle or update a checklist item
+ */
+export const UpdateChecklistItemParams = zod.object({
   id: zod.coerce.number(),
 });
 
@@ -915,6 +1163,13 @@ export const UpdateChecklistItemResponse = zod.object({
   sortOrder: zod.number(),
   createdAt: zod.date(),
   updatedAt: zod.date(),
+});
+
+/**
+ * @summary Delete a checklist item
+ */
+export const DeleteChecklistItemParams = zod.object({
+  id: zod.coerce.number(),
 });
 
 /**
@@ -968,6 +1223,11 @@ export const GetDashboardStatsResponse = zod.object({
       clientEmail: zod.string().nullish(),
       createdAt: zod.date(),
       updatedAt: zod.date(),
+      recurrenceFrequency: zod.string().nullish(),
+      recurrenceEndDate: zod.string().nullish(),
+      parentBookingId: zod.number().nullish(),
+      latitude: zod.string().nullish(),
+      longitude: zod.string().nullish(),
     }),
   ),
 });

@@ -10,3 +10,6 @@ export * from "./todos";
 export * from "./followups";
 export * from "./campaigns";
 export * from "./checklistItems";
+export * from "./bookingPhotos";
+export * from "./inventory";
+export * from "./purchaseOrders";

@@ -7,6 +7,9 @@
  */
 
 export interface UpdateInvoiceBody {
+  invoiceNumber?: string;
+  clientName?: string;
+  bookingId?: number;
   status?: string;
   /** @nullable */
   paidDate?: string | null;

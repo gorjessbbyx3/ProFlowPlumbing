@@ -5,6 +5,7 @@
  * 808 All Purpose Cleaners Business Management API
  * OpenAPI spec version: 0.1.0
  */
+import type { CreateBookingBodyRecurrenceFrequency } from "./createBookingBodyRecurrenceFrequency";
 
 export interface CreateBookingBody {
   clientId?: number;
@@ -19,4 +20,8 @@ export interface CreateBookingBody {
   clientName?: string;
   clientPhone?: string;
   clientEmail?: string;
+  recurrenceFrequency?: CreateBookingBodyRecurrenceFrequency;
+  recurrenceEndDate?: string;
+  latitude?: string;
+  longitude?: string;
 }

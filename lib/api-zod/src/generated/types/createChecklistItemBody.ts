@@ -6,13 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface UpdateLaborEntryBody {
-  employeeId?: number;
-  bookingId?: number;
-  date?: string;
-  hoursWorked?: string;
-  hourlyRate?: string;
-  totalPay?: string;
+export interface CreateChecklistItemBody {
+  category: string;
+  title: string;
   /** @nullable */
   description?: string | null;
+  sortOrder?: number;
 }

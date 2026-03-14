@@ -20,6 +20,11 @@ export const bookingsTable = pgTable("bookings", {
   clientEmail: text("client_email"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
+  recurrenceFrequency: text("recurrence_frequency"), // weekly | biweekly | monthly
+  recurrenceEndDate: text("recurrence_end_date"),
+  parentBookingId: integer("parent_booking_id"),
+  latitude: text("latitude"),
+  longitude: text("longitude"),
 });
 
 export const insertBookingSchema = createInsertSchema(bookingsTable).omit({ id: true, createdAt: true, updatedAt: true });
