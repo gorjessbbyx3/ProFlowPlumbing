@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db, bookingPhotosTable, bookingsTable } from "@workspace/db";
 import multer from "multer";
 import path from "path";
@@ -61,15 +61,20 @@ router.post("/bookings/:id/photos", upload.single("photo"), async (req, res): Pr
 });
 
 router.delete("/bookings/:id/photos/:photoId", async (req, res): Promise<void> => {
+  const bookingId = Number(req.params.id);
   const photoId = Number(req.params.photoId);
-  if (isNaN(photoId)) { res.status(400).json({ error: "Invalid photo ID" }); return; }
+  if (isNaN(bookingId) || isNaN(photoId)) { res.status(400).json({ error: "Invalid ID" }); return; }
 
-  const [photo] = await db.delete(bookingPhotosTable).where(eq(bookingPhotosTable.id, photoId)).returning();
+  const [photo] = await db.delete(bookingPhotosTable)
+    .where(and(eq(bookingPhotosTable.id, photoId), eq(bookingPhotosTable.bookingId, bookingId)))
+    .returning();
   if (!photo) { res.status(404).json({ error: "Photo not found" }); return; }
 
-  // Delete file from disk
+  // Delete file from disk with path traversal protection
   const fullPath = path.resolve(__dirname, "../../..", photo.filePath);
-  try { fs.unlinkSync(fullPath); } catch {}
+  if (fullPath.startsWith(uploadDir)) {
+    try { fs.unlinkSync(fullPath); } catch {}
+  }
 
   res.sendStatus(204);
 });

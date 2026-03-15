@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, desc } from "drizzle-orm";
-import { db, inventoryTable } from "@workspace/db";
+import { db, inventoryTable, insertInventorySchema } from "@workspace/db";
 
 const router: IRouter = Router();
 
@@ -10,14 +10,18 @@ router.get("/inventory", async (_req, res): Promise<void> => {
 });
 
 router.post("/inventory", async (req, res): Promise<void> => {
-  const [item] = await db.insert(inventoryTable).values(req.body).returning();
+  const parsed = insertInventorySchema.safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [item] = await db.insert(inventoryTable).values(parsed.data).returning();
   res.status(201).json(item);
 });
 
 router.patch("/inventory/:id", async (req, res): Promise<void> => {
   const id = Number(req.params.id);
   if (isNaN(id)) { res.status(400).json({ error: "Invalid ID" }); return; }
-  const [item] = await db.update(inventoryTable).set(req.body).where(eq(inventoryTable.id, id)).returning();
+  const parsed = insertInventorySchema.partial().safeParse(req.body);
+  if (!parsed.success) { res.status(400).json({ error: parsed.error.message }); return; }
+  const [item] = await db.update(inventoryTable).set(parsed.data).where(eq(inventoryTable.id, id)).returning();
   if (!item) { res.status(404).json({ error: "Not found" }); return; }
   res.json(item);
 });

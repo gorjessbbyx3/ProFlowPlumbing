@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { db, bookingsTable } from "@workspace/db";
 import {
   CreateBookingBody,
@@ -88,9 +88,7 @@ router.delete("/bookings/:id", async (req, res): Promise<void> => {
   res.sendStatus(204);
 });
 
-export default router;
-
-// Generate recurring bookings from a template
+// Generate recurring bookings from a template (wrapped in a transaction)
 router.post("/bookings/:id/generate-recurring", async (req, res): Promise<void> => {
   const bookingId = Number(req.params.id);
   if (isNaN(bookingId)) { res.status(400).json({ error: "Invalid ID" }); return; }
@@ -104,13 +102,14 @@ router.post("/bookings/:id/generate-recurring", async (req, res): Promise<void> 
   const horizon = endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 3 months default
 
   const daysToAdd = freq === "weekly" ? 7 : freq === "biweekly" ? 14 : 30;
-  const created = [];
   let currentDate = new Date(source.date);
 
   // Find existing child bookings to avoid duplicates
   const existing = await db.select().from(bookingsTable).where(eq(bookingsTable.parentBookingId, bookingId));
   const existingDates = new Set(existing.map(b => b.date));
 
+  // Build all values first, then insert in a single transaction
+  const valuesToInsert = [];
   for (let i = 0; i < 52; i++) {
     currentDate = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
     if (currentDate > horizon) break;
@@ -118,11 +117,11 @@ router.post("/bookings/:id/generate-recurring", async (req, res): Promise<void> 
     const dateStr = currentDate.toISOString().split("T")[0]!;
     if (existingDates.has(dateStr)) continue;
 
-    const [newBooking] = await db.insert(bookingsTable).values({
+    valuesToInsert.push({
       clientId: source.clientId,
       employeeId: source.employeeId,
       serviceType: source.serviceType,
-      status: "scheduled",
+      status: "scheduled" as const,
       date: dateStr,
       time: source.time,
       location: source.location,
@@ -135,9 +134,19 @@ router.post("/bookings/:id/generate-recurring", async (req, res): Promise<void> 
       parentBookingId: bookingId,
       latitude: source.latitude,
       longitude: source.longitude,
-    }).returning();
-    created.push(newBooking);
+    });
   }
+
+  if (valuesToInsert.length === 0) {
+    res.json([]);
+    return;
+  }
+
+  const created = await db.transaction(async (tx) => {
+    return tx.insert(bookingsTable).values(valuesToInsert).returning();
+  });
 
   res.json(created);
 });
+
+export default router;

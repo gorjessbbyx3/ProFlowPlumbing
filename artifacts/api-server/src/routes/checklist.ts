@@ -85,14 +85,23 @@ const SEED_CHECKLIST = [
   { category: "Operations", title: "Set up client communication templates (confirmation, reminders)", sortOrder: 62 },
 ];
 
+let seedPromise: Promise<void> | null = null;
+
 async function seedChecklistIfNeeded() {
   const [result] = await db.select({ total: count() }).from(checklistItemsTable);
   if (result && result.total === 0) {
-    await db.insert(checklistItemsTable).values(SEED_CHECKLIST);
+    // Use a transaction to prevent race conditions with concurrent server starts
+    await db.transaction(async (tx) => {
+      // Re-check inside transaction to avoid duplicates
+      const [recheck] = await tx.select({ total: count() }).from(checklistItemsTable);
+      if (recheck && recheck.total === 0) {
+        await tx.insert(checklistItemsTable).values(SEED_CHECKLIST);
+      }
+    });
   }
 }
 
-seedChecklistIfNeeded().catch(console.error);
+seedPromise = seedChecklistIfNeeded().catch((err) => { console.error("Failed to seed checklist:", err); });
 
 router.get("/checklist", async (_req, res): Promise<void> => {
   const items = await db.select().from(checklistItemsTable).orderBy(checklistItemsTable.sortOrder);
