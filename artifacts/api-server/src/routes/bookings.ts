@@ -109,7 +109,7 @@ router.post("/bookings/:id/generate-recurring", async (req, res): Promise<void> 
   const existingDates = new Set(existing.map(b => b.date));
 
   // Build all values first, then insert in a single transaction
-  const valuesToInsert = [];
+  const valuesToInsert: (typeof bookingsTable.$inferInsert)[] = [];
   for (let i = 0; i < 52; i++) {
     currentDate = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
     if (currentDate > horizon) break;

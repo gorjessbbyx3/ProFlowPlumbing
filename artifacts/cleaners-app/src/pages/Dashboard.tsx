@@ -389,7 +389,7 @@ export default function Dashboard() {
                       <AlertCircle className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
                       <div className="min-w-0 flex-1">
                         <p className="text-sm font-bold text-slate-800 truncate">{f.clientName}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{f.contactMethod} · Due {formatDate(f.dueDate)}</p>
+                        <p className="text-xs text-slate-500 mt-0.5">{(f as any).contactMethod} · Due {formatDate(f.dueDate)}</p>
                       </div>
                     </div>
                   ))}

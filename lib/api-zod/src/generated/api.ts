@@ -423,7 +423,7 @@ export const UploadBookingPhotoParams = zod.object({
 });
 
 export const UploadBookingPhotoBody = zod.object({
-  photo: zod.instanceof(File),
+  photo: zod.any(),
   type: zod.enum(["before", "after"]),
   caption: zod.string().optional(),
 });

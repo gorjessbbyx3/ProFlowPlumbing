@@ -78,12 +78,12 @@ export default function MapView() {
           id: b.id,
           lat: parseFloat(b.latitude),
           lng: parseFloat(b.longitude),
-          clientName: b.clientName,
+          clientName: b.clientName ?? null,
           serviceType: b.serviceType,
           status: b.status,
           date: b.date,
           time: b.time,
-          location: b.location,
+          location: b.location ?? null,
         });
       } else {
         toGeocode.push(b);
