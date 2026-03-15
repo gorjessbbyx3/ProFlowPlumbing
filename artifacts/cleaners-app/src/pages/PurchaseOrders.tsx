@@ -25,7 +25,12 @@ type FormState = {
 };
 
 const emptyItem: LineItem = { description: "", quantity: 1, unitPrice: 0, total: 0 };
-const emptyForm: FormState = { vendor: "", date: new Date().toISOString().split("T")[0], notes: "", items: [{ ...emptyItem }] };
+function todayLocal() {
+  const d = new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+const emptyForm: FormState = { vendor: "", date: todayLocal(), notes: "", items: [{ ...emptyItem }] };
 
 export default function PurchaseOrders() {
   const [orders, setOrders] = useState<PO[]>([]);
@@ -80,7 +85,7 @@ export default function PurchaseOrders() {
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       total: total.toFixed(2),
-      status: "draft",
+      status: editingId ? (orders.find(o => o.id === editingId)?.status || "draft") : "draft",
     };
 
     if (editingId) {
