@@ -34,7 +34,7 @@ router.post("/receipts", async (req, res): Promise<void> => {
   res.status(201).json(receipt);
 });
 
-router.put("/receipts/:id", async (req, res): Promise<void> => {
+router.patch("/receipts/:id", async (req, res): Promise<void> => {
   const params = UpdateReceiptParams.safeParse(req.params);
   if (!params.success) {
     res.status(400).json({ error: params.error.message });

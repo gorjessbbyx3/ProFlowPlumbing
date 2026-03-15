@@ -49,7 +49,7 @@ interface GeocodedBooking {
 }
 
 export default function MapView() {
-  const today = new Date().toISOString().split("T")[0]!;
+  const today = (() => { const d = new Date(); const pad = (n: number) => n.toString().padStart(2, "0"); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; })();
   const { data: bookings, isLoading } = useListBookings({ date: today });
   const { data: allBookings } = useListBookings();
   const [showAll, setShowAll] = useState(false);
@@ -60,6 +60,7 @@ export default function MapView() {
 
   useEffect(() => {
     if (!displayBookings) return;
+    let cancelled = false;
 
     const bookingsWithLocation = displayBookings.filter((b) => b.location);
     if (bookingsWithLocation.length === 0) {
@@ -118,10 +119,13 @@ export default function MapView() {
         return null;
       })
     ).then((results) => {
+      if (cancelled) return;
       const valid = results.filter(Boolean) as GeocodedBooking[];
       setGeocoded([...alreadyGeocoded, ...valid]);
       setGeocoding(false);
     });
+
+    return () => { cancelled = true; };
   }, [displayBookings]);
 
   // Center on Hawaii (Oahu)

@@ -25,7 +25,12 @@ type FormState = {
 };
 
 const emptyItem: LineItem = { description: "", quantity: 1, unitPrice: 0, total: 0 };
-const emptyForm: FormState = { vendor: "", date: new Date().toISOString().split("T")[0], notes: "", items: [{ ...emptyItem }] };
+function todayLocal() {
+  const d = new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+const emptyForm: FormState = { vendor: "", date: todayLocal(), notes: "", items: [{ ...emptyItem }] };
 
 export default function PurchaseOrders() {
   const [orders, setOrders] = useState<PO[]>([]);
@@ -37,20 +42,27 @@ export default function PurchaseOrders() {
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchOrders = async () => {
-    const res = await fetch("/api/purchase-orders");
-    const data = await res.json();
-    setOrders(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/purchase-orders");
+      if (!res.ok) throw new Error("Failed to fetch purchase orders");
+      const data = await res.json();
+      setOrders(data);
+    } catch (err) {
+      console.error("Failed to fetch purchase orders:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchOrders(); }, []);
 
   const updateLineItem = (idx: number, field: keyof LineItem, value: string | number) => {
     const newItems = [...form.items];
-    (newItems[idx] as any)[field] = value;
+    const updated = { ...newItems[idx], [field]: value };
     if (field === "quantity" || field === "unitPrice") {
-      newItems[idx].total = newItems[idx].quantity * newItems[idx].unitPrice;
+      updated.total = updated.quantity * updated.unitPrice;
     }
+    newItems[idx] = updated;
     setForm({ ...form, items: newItems });
   };
 
@@ -73,7 +85,7 @@ export default function PurchaseOrders() {
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       total: total.toFixed(2),
-      status: "draft",
+      status: editingId ? (orders.find(o => o.id === editingId)?.status || "draft") : "draft",
     };
 
     if (editingId) {
@@ -95,7 +107,7 @@ export default function PurchaseOrders() {
 
   const openEdit = (po: PO) => {
     setEditingId(po.id);
-    setForm({ vendor: po.vendor, date: po.date, notes: po.notes || "", items: po.items });
+    setForm({ vendor: po.vendor, date: po.date, notes: po.notes || "", items: po.items.map((i: LineItem) => ({ ...i })) });
     setShowForm(true);
   };
 

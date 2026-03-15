@@ -26,7 +26,8 @@ function getWeekDates(baseDate: Date): Date[] {
 }
 
 function formatDateISO(d: Date): string {
-  return d.toISOString().split("T")[0];
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function formatDateShort(d: Date): string {

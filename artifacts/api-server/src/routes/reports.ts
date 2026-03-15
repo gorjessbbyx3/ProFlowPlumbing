@@ -24,7 +24,7 @@ router.get("/reports/tax-summary", async (req, res): Promise<void> => {
     .where(and(
       eq(invoicesTable.status, "paid"),
       gte(invoicesTable.createdAt, new Date(startDate)),
-      lte(invoicesTable.createdAt, new Date(endDate + "T23:59:59Z"))
+      lte(invoicesTable.createdAt, new Date(endDate + "T23:59:59.999Z"))
     ));
 
   const expenseTotal = await db
@@ -49,7 +49,7 @@ router.get("/reports/tax-summary", async (req, res): Promise<void> => {
     .where(and(
       eq(invoicesTable.status, "paid"),
       gte(invoicesTable.createdAt, new Date(startDate)),
-      lte(invoicesTable.createdAt, new Date(endDate + "T23:59:59Z"))
+      lte(invoicesTable.createdAt, new Date(endDate + "T23:59:59.999Z"))
     ));
 
   const expenseCountResult = await db

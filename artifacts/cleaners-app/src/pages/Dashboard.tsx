@@ -61,7 +61,9 @@ function getGreeting(): { text: string; icon: typeof Sun; subtext: string } {
 }
 
 function getToday() {
-  return new Date().toISOString().split("T")[0]!;
+  const d = new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
 function ProgressRing({ percent, size = 56, stroke = 5, color = "text-primary" }: { percent: number; size?: number; stroke?: number; color?: string }) {
@@ -470,7 +472,7 @@ export default function Dashboard() {
                 </div>
                 <h2 className="font-display font-bold text-lg">Financial Snapshot</h2>
               </div>
-              <button onClick={() => navigate("/tax-reports")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
+              <button onClick={() => navigate("/reports")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 Reports <ArrowRight className="w-3 h-3" />
               </button>
             </div>
