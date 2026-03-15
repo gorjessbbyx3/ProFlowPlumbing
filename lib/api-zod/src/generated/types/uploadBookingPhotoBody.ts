@@ -8,7 +8,7 @@
 import type { UploadBookingPhotoBodyType } from "./uploadBookingPhotoBodyType";
 
 export type UploadBookingPhotoBody = {
-  photo: Blob;
+  photo: unknown;
   type: UploadBookingPhotoBodyType;
   caption?: string;
 };
