@@ -8,6 +8,11 @@ directory = "./artifacts/cleaners-app/dist/public"
 not_found_handling = "single-page-application"
 binding = "ASSETS"
 
+[[d1_databases]]
+binding = "DB"
+database_name = "allpurposecleaners-db"
+database_id = "4796ae81-9da6-4180-a1e6-92c434209acd"
+
 [[routes]]
 pattern = "allpurposecleaners.gorjess.co"
 zone_name = "gorjess.co"
