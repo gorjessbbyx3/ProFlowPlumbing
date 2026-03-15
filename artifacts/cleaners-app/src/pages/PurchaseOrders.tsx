@@ -37,20 +37,27 @@ export default function PurchaseOrders() {
   const printRef = useRef<HTMLDivElement>(null);
 
   const fetchOrders = async () => {
-    const res = await fetch("/api/purchase-orders");
-    const data = await res.json();
-    setOrders(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/purchase-orders");
+      if (!res.ok) throw new Error("Failed to fetch purchase orders");
+      const data = await res.json();
+      setOrders(data);
+    } catch (err) {
+      console.error("Failed to fetch purchase orders:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchOrders(); }, []);
 
   const updateLineItem = (idx: number, field: keyof LineItem, value: string | number) => {
     const newItems = [...form.items];
-    (newItems[idx] as any)[field] = value;
+    const updated = { ...newItems[idx], [field]: value };
     if (field === "quantity" || field === "unitPrice") {
-      newItems[idx].total = newItems[idx].quantity * newItems[idx].unitPrice;
+      updated.total = updated.quantity * updated.unitPrice;
     }
+    newItems[idx] = updated;
     setForm({ ...form, items: newItems });
   };
 
@@ -95,7 +102,7 @@ export default function PurchaseOrders() {
 
   const openEdit = (po: PO) => {
     setEditingId(po.id);
-    setForm({ vendor: po.vendor, date: po.date, notes: po.notes || "", items: po.items });
+    setForm({ vendor: po.vendor, date: po.date, notes: po.notes || "", items: po.items.map((i: LineItem) => ({ ...i })) });
     setShowForm(true);
   };
 

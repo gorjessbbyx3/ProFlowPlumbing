@@ -69,7 +69,7 @@ export default function Todos() {
         ) : todos?.length === 0 ? (
           <Card className="text-center p-12 text-slate-500">No tasks on your list. Enjoy your day!</Card>
         ) : (
-          todos?.sort((a,b) => Number(a.completed) - Number(b.completed)).map(todo => (
+          todos?.slice().sort((a,b) => Number(a.completed) - Number(b.completed)).map(todo => (
             <Card key={todo.id} className={cn("p-4 flex items-start gap-4 transition-all group", todo.completed ? "opacity-60 bg-slate-50" : "bg-white")}>
               <button onClick={() => handleToggle(todo)} className="mt-1 shrink-0 transition-transform hover:scale-110">
                 {todo.completed ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Circle className="w-6 h-6 text-slate-300 hover:text-primary" />}

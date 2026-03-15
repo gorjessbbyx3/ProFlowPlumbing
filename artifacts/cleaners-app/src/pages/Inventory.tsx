@@ -35,10 +35,16 @@ export default function Inventory() {
   const [filter, setFilter] = useState("");
 
   const fetchItems = async () => {
-    const res = await fetch("/api/inventory");
-    const data = await res.json();
-    setItems(data);
-    setLoading(false);
+    try {
+      const res = await fetch("/api/inventory");
+      if (!res.ok) throw new Error("Failed to fetch inventory");
+      const data = await res.json();
+      setItems(data);
+    } catch (err) {
+      console.error("Failed to fetch inventory:", err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchItems(); }, []);
