@@ -363,19 +363,72 @@ const routes = [
     if (query.endDate) { conds.push("date <= ?"); vals.push(query.endDate); }
     if (query.category) { conds.push("category = ?"); vals.push(query.category); }
     if (conds.length) sql += " WHERE " + conds.join(" AND ");
-    sql += " ORDER BY date";
+    sql += " ORDER BY date DESC";
     const { results } = await db.prepare(sql).bind(...vals).all();
     return json(results.map(camelRow));
   }},
-  { method: "POST", path: "/expenses", handler: async ({ db, body }) => {
-    const d = sc(body);
-    const { sql, vals } = buildInsert("expenses", { category: d.category, description: d.description, amount: d.amount, date: d.date, vendor: d.vendor || null, notes: d.notes || null, created_at: now(), updated_at: now() });
+  { method: "POST", path: "/expenses", handler: async ({ db, body, request }) => {
+    // Handle both JSON and FormData
+    const contentType = request.headers.get("content-type") || "";
+    let d, receiptImage = null;
+    if (contentType.includes("multipart/form-data")) {
+      const fd = await request.formData();
+      d = { category: fd.get("category"), description: fd.get("description"), amount: fd.get("amount"), date: fd.get("date"), vendor: fd.get("vendor") || null, notes: fd.get("notes") || null };
+      const file = fd.get("receiptImage");
+      if (file && file instanceof File && file.size > 0) {
+        const buffer = await file.arrayBuffer();
+        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+        receiptImage = `data:${file.type || "image/jpeg"};base64,${base64}`;
+      }
+    } else {
+      d = sc(body);
+      receiptImage = d.receipt_image || null;
+    }
+    const { sql, vals } = buildInsert("expenses", { category: d.category, description: d.description, amount: d.amount, date: d.date, vendor: d.vendor || null, notes: d.notes || null, receipt_image: receiptImage, created_at: now(), updated_at: now() });
     const info = await db.prepare(sql).bind(...vals).run();
     const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(info.meta.last_row_id).first();
     return json(camelRow(row), 201);
   }},
   { method: "GET", path: "/expenses/:id", handler: async ({ db, params }) => { const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
-  { method: "PATCH", path: "/expenses/:id", handler: async ({ db, params, body }) => { const u = buildUpdate("expenses", sc(body), params.id); if (!u) return err("No fields"); await db.prepare(u.sql).bind(...u.vals).run(); const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
+  { method: "PATCH", path: "/expenses/:id", handler: async ({ db, params, body, request }) => {
+    const contentType = request.headers.get("content-type") || "";
+    let d;
+    if (contentType.includes("multipart/form-data")) {
+      const fd = await request.formData();
+      d = {};
+      for (const [k, v] of fd.entries()) {
+        if (k === "receiptImage" && v instanceof File && v.size > 0) {
+          const buffer = await v.arrayBuffer();
+          const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+          d.receipt_image = `data:${v.type || "image/jpeg"};base64,${base64}`;
+        } else if (k !== "receiptImage") {
+          d[k.replace(/[A-Z]/g, l => "_" + l.toLowerCase())] = v;
+        }
+      }
+    } else {
+      d = sc(body);
+    }
+    const u = buildUpdate("expenses", d, params.id);
+    if (!u) return err("No fields");
+    await db.prepare(u.sql).bind(...u.vals).run();
+    const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(params.id).first();
+    return row ? json(camelRow(row)) : err("Not found", 404);
+  }},
+  { method: "POST", path: "/expenses/:id/receipt", handler: async ({ db, params, request }) => {
+    const id = Number(params.id);
+    if (isNaN(id)) return err("Invalid ID");
+    const existing = await db.prepare("SELECT id FROM expenses WHERE id = ?").bind(id).first();
+    if (!existing) return err("Expense not found", 404);
+    const fd = await request.formData();
+    const file = fd.get("receiptImage");
+    if (!file || !(file instanceof File) || file.size === 0) return err("No image uploaded");
+    const buffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const dataUri = `data:${file.type || "image/jpeg"};base64,${base64}`;
+    await db.prepare("UPDATE expenses SET receipt_image = ?, updated_at = datetime('now') WHERE id = ?").bind(dataUri, id).run();
+    const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(id).first();
+    return json(camelRow(row));
+  }},
   { method: "DELETE", path: "/expenses/:id", handler: async ({ db, params }) => crudDelete(db, "expenses", params.id) },
 
   // ── Shifts ──
