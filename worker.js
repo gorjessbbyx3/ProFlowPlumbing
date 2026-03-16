@@ -23,6 +23,49 @@ function matchRoute(method, path, routes) {
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    // Public Invoice Page — shareable, no auth
+    if (url.pathname.startsWith("/invoice/")) {
+      const token = url.pathname.split("/invoice/")[1];
+      if (token) {
+        const row = await env.DB.prepare("SELECT * FROM invoices WHERE public_token = ?").bind(token).first();
+        if (row) {
+          const inv = row;
+          const statusColor = inv.status === "paid" ? "#22c55e" : inv.status === "overdue" ? "#ef4444" : "#f59e0b";
+          const statusLabel = inv.status.charAt(0).toUpperCase() + inv.status.slice(1);
+          const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Invoice ${inv.invoice_number} — 808 All Purpose Cleaners</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,system-ui,sans-serif;background:#f1f5f9;padding:20px;color:#1e293b}
+.card{max-width:600px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
+.header{background:#003087;color:#fff;padding:28px 24px;text-align:center}
+.header h1{font-size:22px;font-weight:800;letter-spacing:-.5px}.header p{opacity:.8;margin-top:4px;font-size:13px}
+.badge{display:inline-block;padding:6px 16px;border-radius:99px;font-weight:700;font-size:12px;margin-top:12px;color:#fff;background:${statusColor}}
+.body{padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
+.row:last-child{border:none}.label{color:#64748b;font-weight:500}.value{font-weight:700;text-align:right}
+.total-row{background:#f8fafc;margin:16px -24px -24px;padding:20px 24px;border-top:2px solid #003087;display:flex;justify-content:space-between;align-items:center}
+.total-row .label{font-size:18px;font-weight:800;color:#003087}.total-row .value{font-size:24px;font-weight:900;color:#003087}
+.footer{text-align:center;padding:16px;font-size:12px;color:#94a3b8}
+.pay-btn{display:block;width:100%;padding:16px;background:#003087;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;text-align:center}
+.pay-btn:hover{opacity:.9}</style></head><body>
+<div class="card">
+<div class="header"><h1>808 All Purpose Cleaners</h1><p>Professional Cleaning — Cars · Boats · Condos</p><span class="badge">${statusLabel}</span></div>
+<div class="body">
+<div class="row"><span class="label">Invoice</span><span class="value">${inv.invoice_number}</span></div>
+${inv.client_name ? `<div class="row"><span class="label">Client</span><span class="value">${inv.client_name}</span></div>` : ""}
+${inv.description ? `<div class="row"><span class="label">Service</span><span class="value">${inv.description}</span></div>` : ""}
+<div class="row"><span class="label">Subtotal</span><span class="value">$${parseFloat(inv.amount).toFixed(2)}</span></div>
+<div class="row"><span class="label">Tax (GET 4.712%)</span><span class="value">$${parseFloat(inv.tax).toFixed(2)}</span></div>
+${inv.due_date ? `<div class="row"><span class="label">Due Date</span><span class="value">${inv.due_date}</span></div>` : ""}
+<div class="total-row"><span class="label">Total Due</span><span class="value">$${parseFloat(inv.total).toFixed(2)}</span></div>
+</div>
+<div style="padding:0 24px 24px"><p style="text-align:center;font-size:13px;color:#64748b;margin-top:16px">Payment accepted via Cash, Zelle, Venmo, or Card</p></div>
+<div class="footer">808 All Purpose Cleaners · 808-723-1011 · Lainecaldera@aol.com</div>
+</div></body></html>`;
+          return new Response(html, { status: 200, headers: { "Content-Type": "text/html;charset=UTF-8", ...CORS } });
+        }
+      }
+    }
+
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
     if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: CORS });
 
@@ -627,6 +670,291 @@ const routes = [
     const { results: ebc } = await db.prepare("SELECT category, COALESCE(SUM(CAST(amount AS REAL)),0) as total FROM expenses WHERE date >= ? AND date <= ? GROUP BY category").bind(startDate, endDate).all();
     const inc = parseFloat(income?.t||0), exp = parseFloat(expenseT?.t||0), lab = parseFloat(laborT?.t||0);
     return json({ totalIncome: inc.toFixed(2), totalExpenses: exp.toFixed(2), totalLaborCosts: lab.toFixed(2), netProfit: (inc-exp-lab).toFixed(2), invoiceCount: ic?.c||0, expenseCount: ec?.c||0, laborEntryCount: lc?.c||0, expensesByCategory: ebc.map(e=>({category:e.category,total:parseFloat(e.total).toFixed(2)})) });
+  }},
+
+  // ── Subscriptions (Recurring Revenue) ──
+  { method: "GET", path: "/subscriptions", handler: async ({ db }) => {
+    const { results } = await db.prepare("SELECT * FROM subscriptions ORDER BY next_service_date").all();
+    return json(results.map(camelRow));
+  }},
+  { method: "POST", path: "/subscriptions", handler: async ({ db, body }) => {
+    const d = sc(body);
+    const { sql, vals } = buildInsert("subscriptions", { client_id: d.client_id || null, client_name: d.client_name, service_type: d.service_type, frequency: d.frequency || "weekly", price: d.price, next_service_date: d.next_service_date, status: d.status || "active", location: d.location || null, notes: d.notes || null, created_at: now(), updated_at: now() });
+    const info = await db.prepare(sql).bind(...vals).run();
+    const row = await db.prepare("SELECT * FROM subscriptions WHERE id = ?").bind(info.meta.last_row_id).first();
+    return json(camelRow(row), 201);
+  }},
+  { method: "GET", path: "/subscriptions/:id", handler: async ({ db, params }) => { const row = await db.prepare("SELECT * FROM subscriptions WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
+  { method: "PATCH", path: "/subscriptions/:id", handler: async ({ db, params, body }) => { const u = buildUpdate("subscriptions", sc(body), params.id); if (!u) return err("No fields"); await db.prepare(u.sql).bind(...u.vals).run(); const row = await db.prepare("SELECT * FROM subscriptions WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
+  { method: "DELETE", path: "/subscriptions/:id", handler: async ({ db, params }) => crudDelete(db, "subscriptions", params.id) },
+  { method: "GET", path: "/subscriptions/stats/mrr", handler: async ({ db }) => {
+    const active = await db.prepare("SELECT * FROM subscriptions WHERE status = 'active'").all();
+    const subs = active.results || [];
+    let weeklyTotal = 0, biweeklyTotal = 0, monthlyTotal = 0;
+    subs.forEach(s => {
+      const p = parseFloat(s.price || "0");
+      if (s.frequency === "weekly") weeklyTotal += p;
+      else if (s.frequency === "biweekly") biweeklyTotal += p;
+      else if (s.frequency === "monthly") monthlyTotal += p;
+    });
+    const mrr = (weeklyTotal * 4.33) + (biweeklyTotal * 2.17) + monthlyTotal;
+    const arr = mrr * 12;
+    return json({ mrr: mrr.toFixed(2), arr: arr.toFixed(2), activeCount: subs.length, weeklyRevenue: weeklyTotal.toFixed(2), biweeklyRevenue: biweeklyTotal.toFixed(2), monthlyRevenue: monthlyTotal.toFixed(2), subscriptions: subs.map(camelRow) });
+  }},
+
+  // ── Job Supply Usage (Inventory tied to jobs) ──
+  { method: "GET", path: "/bookings/:id/supplies", handler: async ({ db, params }) => {
+    const { results } = await db.prepare(`SELECT jsu.*, i.name as item_name, i.unit, i.category as item_category FROM job_supply_usage jsu JOIN inventory i ON jsu.inventory_id = i.id WHERE jsu.booking_id = ? ORDER BY jsu.created_at`).bind(params.id).all();
+    return json(results.map(camelRow));
+  }},
+  { method: "POST", path: "/bookings/:id/supplies", handler: async ({ db, params, body }) => {
+    const bookingId = Number(params.id);
+    const d = sc(body);
+    const qty = parseInt(d.quantity_used || "1");
+    // Get current inventory to calculate unit cost
+    const inv = await db.prepare("SELECT * FROM inventory WHERE id = ?").bind(d.inventory_id).first();
+    if (!inv) return err("Inventory item not found", 404);
+    const unitCost = inv.cost || "0";
+    // Insert usage
+    const info = await db.prepare("INSERT INTO job_supply_usage (booking_id, inventory_id, quantity_used, unit_cost, created_at) VALUES (?, ?, ?, ?, ?)").bind(bookingId, d.inventory_id, qty, unitCost, now()).run();
+    // Decrement inventory
+    await db.prepare("UPDATE inventory SET quantity = MAX(0, quantity - ?), updated_at = datetime('now') WHERE id = ?").bind(qty, d.inventory_id).run();
+    // Update booking supplies_cost
+    const totalCost = await db.prepare("SELECT COALESCE(SUM(CAST(unit_cost AS REAL) * quantity_used), 0) as t FROM job_supply_usage WHERE booking_id = ?").bind(bookingId).first();
+    await db.prepare("UPDATE bookings SET supplies_cost = ?, updated_at = datetime('now') WHERE id = ?").bind((totalCost?.t || 0).toFixed(2), bookingId).run();
+    // Check for low stock notification
+    const updated = await db.prepare("SELECT * FROM inventory WHERE id = ?").bind(d.inventory_id).first();
+    if (updated && updated.min_stock && updated.quantity <= updated.min_stock) {
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("low_stock", "Low Stock Alert", `${updated.name} is at ${updated.quantity} ${updated.unit} (minimum: ${updated.min_stock})`, "/inventory", now()).run();
+    }
+    const row = await db.prepare("SELECT jsu.*, i.name as item_name, i.unit FROM job_supply_usage jsu JOIN inventory i ON jsu.inventory_id = i.id WHERE jsu.id = ?").bind(info.meta.last_row_id).first();
+    return json(camelRow(row), 201);
+  }},
+  { method: "DELETE", path: "/bookings/:id/supplies/:usageId", handler: async ({ db, params }) => {
+    const usage = await db.prepare("SELECT * FROM job_supply_usage WHERE id = ? AND booking_id = ?").bind(params.usageId, params.id).first();
+    if (!usage) return err("Not found", 404);
+    // Restore inventory
+    await db.prepare("UPDATE inventory SET quantity = quantity + ?, updated_at = datetime('now') WHERE id = ?").bind(usage.quantity_used, usage.inventory_id).run();
+    await db.prepare("DELETE FROM job_supply_usage WHERE id = ?").bind(params.usageId).run();
+    // Recalculate booking cost
+    const totalCost = await db.prepare("SELECT COALESCE(SUM(CAST(unit_cost AS REAL) * quantity_used), 0) as t FROM job_supply_usage WHERE booking_id = ?").bind(params.id).first();
+    await db.prepare("UPDATE bookings SET supplies_cost = ?, updated_at = datetime('now') WHERE id = ?").bind((totalCost?.t || 0).toFixed(2), params.id).run();
+    return noContent();
+  }},
+
+  // ── Notifications ──
+  { method: "GET", path: "/notifications", handler: async ({ db, query }) => {
+    const unreadOnly = query.unread === "true";
+    const sql = unreadOnly ? "SELECT * FROM notifications WHERE is_read = 0 ORDER BY created_at DESC LIMIT 50" : "SELECT * FROM notifications ORDER BY created_at DESC LIMIT 50";
+    const { results } = await db.prepare(sql).all();
+    return json(results.map(r => ({ ...camelRow(r), isRead: !!r.is_read })));
+  }},
+  { method: "GET", path: "/notifications/count", handler: async ({ db }) => {
+    const r = await db.prepare("SELECT COUNT(*) as c FROM notifications WHERE is_read = 0").first();
+    return json({ unread: r?.c || 0 });
+  }},
+  { method: "PATCH", path: "/notifications/:id/read", handler: async ({ db, params }) => {
+    await db.prepare("UPDATE notifications SET is_read = 1 WHERE id = ?").bind(params.id).run();
+    return json({ ok: true });
+  }},
+  { method: "POST", path: "/notifications/read-all", handler: async ({ db }) => {
+    await db.prepare("UPDATE notifications SET is_read = 1 WHERE is_read = 0").run();
+    return json({ ok: true });
+  }},
+  { method: "DELETE", path: "/notifications/:id", handler: async ({ db, params }) => crudDelete(db, "notifications", params.id) },
+
+  // ── Smart Notification Generator (call periodically or on demand) ──
+  { method: "POST", path: "/notifications/generate", handler: async ({ db }) => {
+    const generated = [];
+    const today = new Date().toISOString().split("T")[0];
+    const tomorrow = new Date(Date.now() + 86400000).toISOString().split("T")[0];
+
+    // 1. Tomorrow's jobs reminder
+    const tomorrowJobs = await db.prepare("SELECT COUNT(*) as c FROM bookings WHERE date = ? AND status = 'scheduled'").bind(tomorrow).first();
+    if (tomorrowJobs?.c > 0) {
+      const first = await db.prepare("SELECT time, location FROM bookings WHERE date = ? AND status = 'scheduled' ORDER BY time LIMIT 1").bind(tomorrow).first();
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("tomorrow_jobs", "Tomorrow's Schedule", `You have ${tomorrowJobs.c} job${tomorrowJobs.c > 1 ? "s" : ""} tomorrow. First at ${first?.time || "TBD"}${first?.location ? " in " + first.location : ""}.`, "/scheduling", now()).run();
+      generated.push("tomorrow_jobs");
+    }
+
+    // 2. Overdue invoices
+    const overdue = await db.prepare("SELECT COUNT(*) as c, COALESCE(SUM(CAST(total AS REAL)),0) as t FROM invoices WHERE status = 'unpaid' AND due_date < ?").bind(today).first();
+    if (overdue?.c > 0) {
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("overdue_invoice", "Overdue Invoices", `${overdue.c} invoice${overdue.c > 1 ? "s" : ""} overdue totaling $${parseFloat(overdue.t).toFixed(2)}. Send reminders?`, "/invoices", now()).run();
+      generated.push("overdue_invoices");
+    }
+
+    // 3. Low stock items
+    const { results: lowStock } = await db.prepare("SELECT name, quantity, unit, min_stock FROM inventory WHERE min_stock > 0 AND quantity <= min_stock").all();
+    for (const item of lowStock) {
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("low_stock", "Low Stock: " + item.name, `Only ${item.quantity} ${item.unit} left (minimum: ${item.min_stock}). Time to reorder.`, "/inventory", now()).run();
+      generated.push("low_stock:" + item.name);
+    }
+
+    // 4. Dormant clients (no booking in 45+ days)
+    const { results: dormant } = await db.prepare(`SELECT c.name, c.id, MAX(b.date) as last_date FROM clients c LEFT JOIN bookings b ON (b.client_id = c.id OR b.client_name = c.name) GROUP BY c.id HAVING last_date IS NOT NULL AND last_date < date('now', '-45 days')`).all();
+    for (const cl of dormant.slice(0, 5)) {
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("dormant_client", "Win Back: " + cl.name, `${cl.name} hasn't booked since ${cl.last_date}. Send a follow-up?`, "/followups", now()).run();
+      generated.push("dormant:" + cl.name);
+    }
+
+    // 5. Upcoming subscription services
+    const { results: upcomingSubs } = await db.prepare("SELECT * FROM subscriptions WHERE status = 'active' AND next_service_date = ?").bind(tomorrow).all();
+    for (const sub of upcomingSubs) {
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("subscription_due", "Subscription Due: " + sub.client_name, `${sub.service_type} for ${sub.client_name} is scheduled tomorrow ($${sub.price}).`, "/bookings", now()).run();
+      generated.push("sub:" + sub.client_name);
+    }
+
+    // 6. Pending todos due today or overdue
+    const overdueTodos = await db.prepare("SELECT COUNT(*) as c FROM todos WHERE completed = 0 AND due_date <= ?").bind(today).first();
+    if (overdueTodos?.c > 0) {
+      await db.prepare("INSERT INTO notifications (type, title, message, action_url, created_at) VALUES (?, ?, ?, ?, ?)").bind("overdue_todo", "Tasks Due", `${overdueTodos.c} task${overdueTodos.c > 1 ? "s" : ""} due or overdue. Check your to-do list.`, "/todos", now()).run();
+      generated.push("overdue_todos");
+    }
+
+    return json({ generated, count: generated.length });
+  }},
+
+  // ── Public Invoice (shareable link, no auth) ──
+  { method: "GET", path: "/public/invoice/:token", handler: async ({ db, params }) => {
+    const row = await db.prepare("SELECT * FROM invoices WHERE public_token = ?").bind(params.token).first();
+    if (!row) return err("Invoice not found", 404);
+    return json(camelRow(row));
+  }},
+  // Generate public token for invoice
+  { method: "POST", path: "/invoices/:id/share", handler: async ({ db, params }) => {
+    const id = Number(params.id);
+    const existing = await db.prepare("SELECT * FROM invoices WHERE id = ?").bind(id).first();
+    if (!existing) return err("Invoice not found", 404);
+    let token = existing.public_token;
+    if (!token) {
+      token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+      await db.prepare("UPDATE invoices SET public_token = ? WHERE id = ?").bind(token, id).run();
+    }
+    return json({ token, url: `/invoice/${token}` });
+  }},
+  // Auto-create invoice from completed booking
+  { method: "POST", path: "/bookings/:id/invoice", handler: async ({ db, params }) => {
+    const booking = await db.prepare("SELECT * FROM bookings WHERE id = ?").bind(params.id).first();
+    if (!booking) return err("Booking not found", 404);
+    // Check if invoice already exists
+    const existing = await db.prepare("SELECT id FROM invoices WHERE booking_id = ?").bind(params.id).first();
+    if (existing) return err("Invoice already exists for this booking", 400);
+    const amount = booking.estimated_price || "0";
+    const tax = (parseFloat(amount) * 0.04712).toFixed(2); // Hawaii GET
+    const total = (parseFloat(amount) + parseFloat(tax)).toFixed(2);
+    const invNum = "INV-" + Date.now().toString(36).toUpperCase();
+    const token = crypto.randomUUID().replace(/-/g, "").slice(0, 16);
+    const dueDate = new Date(Date.now() + 30 * 86400000).toISOString().split("T")[0];
+    const info = await db.prepare("INSERT INTO invoices (booking_id, client_id, invoice_number, amount, tax, total, status, due_date, description, client_name, public_token, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'unpaid', ?, ?, ?, ?, ?, ?)").bind(
+      booking.id, booking.client_id, invNum, amount, tax, total, dueDate,
+      booking.service_type + (booking.location ? " at " + booking.location : ""),
+      booking.client_name, token, now(), now()
+    ).run();
+    const row = await db.prepare("SELECT * FROM invoices WHERE id = ?").bind(info.meta.last_row_id).first();
+    return json({ ...camelRow(row), shareUrl: `/invoice/${token}` }, 201);
+  }},
+
+  // ── Enhanced Financial Dashboard ──
+  { method: "GET", path: "/dashboard/financial", handler: async ({ db }) => {
+    const today = new Date();
+    const thisMonth = today.toISOString().slice(0, 7); // YYYY-MM
+    const thisMonthStart = thisMonth + "-01";
+    const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1).toISOString().slice(0, 7);
+    const lastMonthStart = lastMonth + "-01";
+    const lastMonthEnd = thisMonthStart;
+
+    // This month revenue
+    const thisMonthRev = await db.prepare("SELECT COALESCE(SUM(CAST(total AS REAL)),0) as t FROM invoices WHERE status='paid' AND created_at >= ?").bind(thisMonthStart).first();
+    // Last month revenue
+    const lastMonthRev = await db.prepare("SELECT COALESCE(SUM(CAST(total AS REAL)),0) as t FROM invoices WHERE status='paid' AND created_at >= ? AND created_at < ?").bind(lastMonthStart, lastMonthEnd).first();
+    // This month expenses
+    const thisMonthExp = await db.prepare("SELECT COALESCE(SUM(CAST(amount AS REAL)),0) as t FROM expenses WHERE date >= ?").bind(thisMonthStart).first();
+    // This month labor
+    const thisMonthLab = await db.prepare("SELECT COALESCE(SUM(CAST(total_pay AS REAL)),0) as t FROM labor_entries WHERE date >= ?").bind(thisMonthStart).first();
+    // Outstanding AR
+    const ar = await db.prepare("SELECT COALESCE(SUM(CAST(total AS REAL)),0) as t, COUNT(*) as c FROM invoices WHERE status = 'unpaid'").first();
+    // GET tax owed (4.712%)
+    const allPaidThisMonth = await db.prepare("SELECT COALESCE(SUM(CAST(total AS REAL)),0) as t FROM invoices WHERE status='paid' AND created_at >= ?").bind(thisMonthStart).first();
+    const getOwed = parseFloat(allPaidThisMonth?.t || 0) * 0.04712;
+    // Revenue by month (last 6 months)
+    const { results: monthlyRev } = await db.prepare(`SELECT strftime('%Y-%m', created_at) as month, COALESCE(SUM(CAST(total AS REAL)),0) as revenue FROM invoices WHERE status='paid' AND created_at >= date('now', '-6 months') GROUP BY month ORDER BY month`).all();
+    // Expenses by month
+    const { results: monthlyExp } = await db.prepare(`SELECT strftime('%Y-%m', date) as month, COALESCE(SUM(CAST(amount AS REAL)),0) as expenses FROM expenses WHERE date >= date('now', '-6 months') GROUP BY month ORDER BY month`).all();
+    // Top clients by revenue
+    const { results: topClients } = await db.prepare(`SELECT client_name, COALESCE(SUM(CAST(total AS REAL)),0) as total, COUNT(*) as jobs FROM invoices WHERE status='paid' AND client_name IS NOT NULL GROUP BY client_name ORDER BY total DESC LIMIT 5`).all();
+    // Profit per job (last 20 completed)
+    const { results: jobProfits } = await db.prepare(`SELECT b.id, b.service_type, b.client_name, b.estimated_price, b.supplies_cost, b.date, COALESCE(b.estimated_price, '0') as revenue FROM bookings b WHERE b.status = 'completed' ORDER BY b.date DESC LIMIT 20`).all();
+    // MRR from subscriptions
+    const { results: activeSubs } = await db.prepare("SELECT * FROM subscriptions WHERE status = 'active'").all();
+    let mrr = 0;
+    activeSubs.forEach(s => {
+      const p = parseFloat(s.price || "0");
+      if (s.frequency === "weekly") mrr += p * 4.33;
+      else if (s.frequency === "biweekly") mrr += p * 2.17;
+      else mrr += p;
+    });
+
+    const rev = parseFloat(thisMonthRev?.t || 0);
+    const exp = parseFloat(thisMonthExp?.t || 0);
+    const lab = parseFloat(thisMonthLab?.t || 0);
+    const lastRev = parseFloat(lastMonthRev?.t || 0);
+
+    return json({
+      thisMonth: { revenue: rev.toFixed(2), expenses: exp.toFixed(2), labor: lab.toFixed(2), profit: (rev - exp - lab).toFixed(2) },
+      lastMonth: { revenue: lastRev.toFixed(2) },
+      revenueGrowth: lastRev > 0 ? (((rev - lastRev) / lastRev) * 100).toFixed(1) : "0",
+      accountsReceivable: { total: parseFloat(ar?.t || 0).toFixed(2), count: ar?.c || 0 },
+      getOwed: getOwed.toFixed(2),
+      mrr: mrr.toFixed(2),
+      arr: (mrr * 12).toFixed(2),
+      activeSubscriptions: activeSubs.length,
+      monthlyRevenue: monthlyRev,
+      monthlyExpenses: monthlyExp,
+      topClients,
+      jobProfits: jobProfits.map(camelRow),
+    });
+  }},
+
+  // ── Route Optimization ──
+  { method: "GET", path: "/bookings/route/today", handler: async ({ db }) => {
+    const today = new Date().toISOString().split("T")[0];
+    const { results } = await db.prepare("SELECT * FROM bookings WHERE date = ? AND status IN ('scheduled', 'in progress') ORDER BY time").bind(today).all();
+    // Simple optimization: sort by time, provide Waze/Google Maps links
+    const stops = results.map((b, i) => {
+      const c = camelRow(b);
+      c.stopNumber = i + 1;
+      if (c.latitude && c.longitude) {
+        c.wazeUrl = `https://waze.com/ul?ll=${c.latitude},${c.longitude}&navigate=yes`;
+        c.googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${c.latitude},${c.longitude}`;
+      } else if (c.location) {
+        const loc = encodeURIComponent(c.location);
+        c.wazeUrl = `https://waze.com/ul?q=${loc}&navigate=yes`;
+        c.googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${loc}`;
+      }
+      return c;
+    });
+    // Calculate total estimated revenue for the day
+    const dayRevenue = stops.reduce((s, b) => s + parseFloat(b.estimatedPrice || "0"), 0);
+    return json({ date: today, stops, totalStops: stops.length, estimatedRevenue: dayRevenue.toFixed(2) });
+  }},
+  { method: "GET", path: "/bookings/route/:date", handler: async ({ db, params }) => {
+    const { results } = await db.prepare("SELECT * FROM bookings WHERE date = ? AND status IN ('scheduled', 'in progress') ORDER BY time").bind(params.date).all();
+    const stops = results.map((b, i) => {
+      const c = camelRow(b);
+      c.stopNumber = i + 1;
+      if (c.latitude && c.longitude) {
+        c.wazeUrl = `https://waze.com/ul?ll=${c.latitude},${c.longitude}&navigate=yes`;
+        c.googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${c.latitude},${c.longitude}`;
+      } else if (c.location) {
+        const loc = encodeURIComponent(c.location);
+        c.wazeUrl = `https://waze.com/ul?q=${loc}&navigate=yes`;
+        c.googleMapsUrl = `https://www.google.com/maps/dir/?api=1&destination=${loc}`;
+      }
+      return c;
+    });
+    const dayRevenue = stops.reduce((s, b) => s + parseFloat(b.estimatedPrice || "0"), 0);
+    return json({ date: params.date, stops, totalStops: stops.length, estimatedRevenue: dayRevenue.toFixed(2) });
   }},
 ];
 

@@ -4,10 +4,11 @@ import {
   LayoutDashboard, Users, CalendarDays, BookOpenCheck,
   BriefcaseBusiness, FileText, CreditCard,
   Clock, CheckSquare, PhoneCall, Megaphone, LineChart,
-  Menu, X, Package, ClipboardList
+  Menu, X, Package, ClipboardList, Repeat, Navigation
 } from "lucide-react";
 import logo from "@assets/Untitled-1_1773440534890.png";
 import { cn } from "@/lib/utils";
+import NotificationBell from "./NotificationBell";
 
 const navGroups = [
   {
@@ -31,7 +32,7 @@ const navGroups = [
     items: [
       { name: "Invoices", href: "/invoices", icon: FileText },
       { name: "Money", href: "/money", icon: CreditCard },
-      { name: "Labor", href: "/labor", icon: Clock },
+      { name: "Subscriptions", href: "/subscriptions", icon: Repeat },
       { name: "Reports", href: "/reports", icon: LineChart },
     ],
   },
@@ -40,6 +41,7 @@ const navGroups = [
     items: [
       { name: "Inventory", href: "/inventory", icon: Package },
       { name: "POs", href: "/purchase-orders", icon: ClipboardList },
+      { name: "Labor", href: "/labor", icon: Clock },
       { name: "To-Dos", href: "/todos", icon: CheckSquare },
       { name: "Campaigns", href: "/campaigns", icon: Megaphone },
     ],
@@ -131,12 +133,15 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Desktop Sidebar */}
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 flex-col lg:static">
-        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
-          <img src={logo} alt="All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
-          <div>
-            <h1 className="font-display font-bold text-primary leading-tight text-lg">All Purpose Cleaners</h1>
-            <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
+        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <img src={logo} alt="All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
+            <div>
+              <h1 className="font-display font-bold text-primary leading-tight text-lg">All Purpose Cleaners</h1>
+              <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
+            </div>
           </div>
+          <NotificationBell />
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
@@ -175,9 +180,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <img src={logo} alt="Logo" className="h-7 w-auto max-w-[100px] object-contain rounded" />
             <span className="font-display font-bold text-primary text-sm">808 Cleaners</span>
           </div>
-          <button onClick={() => setMobileMenuOpen(true)} className="p-2 -mr-2 rounded-xl text-slate-500 hover:bg-slate-100 active:scale-95 transition">
-            <Menu className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-1">
+            <NotificationBell />
+            <button onClick={() => setMobileMenuOpen(true)} className="p-2 -mr-2 rounded-xl text-slate-500 hover:bg-slate-100 active:scale-95 transition">
+              <Menu className="w-6 h-6" />
+            </button>
+          </div>
         </header>
 
         <div className="absolute top-0 left-0 right-0 h-64 bg-primary/5 -z-10 blur-3xl opacity-50 pointer-events-none" />

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   useGetDashboardStats,
   useListChecklistItems,
@@ -18,6 +18,7 @@ import type {
   ListShiftsQueryResult,
 } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import { Card, Badge } from "@/components/ui";
 import { cn, formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
 import {
@@ -115,6 +116,11 @@ export default function Dashboard() {
   const { data: expenses } = useListExpenses();
   const updateChecklist = useUpdateChecklistItem();
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [financial, setFinancial] = useState<any>(null);
+
+  useEffect(() => {
+    fetch("/api/dashboard/financial").then(r => r.json()).then(setFinancial).catch(() => {});
+  }, []);
 
   const handleToggleChecklist = (id: number, currentCompleted: boolean) => {
     updateChecklist.mutate(

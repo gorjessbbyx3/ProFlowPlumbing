@@ -18,6 +18,7 @@ import Campaigns from "@/pages/Campaigns";
 import Reports from "@/pages/Reports";
 import Inventory from "@/pages/Inventory";
 import PurchaseOrders from "@/pages/PurchaseOrders";
+import Subscriptions from "@/pages/Subscriptions";
 
 function Router() {
   return (
@@ -40,6 +41,7 @@ function Router() {
         <Route path="/reports" component={Reports} />
         <Route path="/inventory" component={Inventory} />
         <Route path="/purchase-orders" component={PurchaseOrders} />
+        <Route path="/subscriptions" component={Subscriptions} />
         <Route>
           <div className="text-center p-12">
             <h1 className="text-4xl font-bold">404</h1>
