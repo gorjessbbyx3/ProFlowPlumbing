@@ -9,15 +9,24 @@ const noContent = () => new Response(null, { status: 204, headers: CORS });
 const err = (msg, status = 400) => json({ error: msg }, status);
 const now = () => new Date().toISOString();
 
-// Simple path router
+// Simple path router — prefers specific paths over parameterized ones
 function matchRoute(method, path, routes) {
+  let best = null;
+  let bestSpecificity = -1;
   for (const r of routes) {
     if (r.method !== method) continue;
     const regex = new RegExp("^" + r.path.replace(/:(\w+)/g, "(?<$1>[^/]+)") + "$");
     const m = path.match(regex);
-    if (m) return { handler: r.handler, params: m.groups || {} };
+    if (m) {
+      // Count non-parameterized segments as specificity score
+      const specificity = r.path.split("/").filter(s => s && !s.startsWith(":")).length;
+      if (specificity > bestSpecificity) {
+        best = { handler: r.handler, params: m.groups || {} };
+        bestSpecificity = specificity;
+      }
+    }
   }
-  return null;
+  return best;
 }
 
 export default {
