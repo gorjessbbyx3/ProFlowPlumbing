@@ -109,7 +109,7 @@ export default function Invoices() {
                         <CheckCircle className="w-3.5 h-3.5 mr-1" /> Pay
                       </Button>
                     )}
-                    <div className="inline-flex opacity-0 group-hover:opacity-100 transition-opacity gap-2 align-middle">
+                    <div className="inline-flex  gap-2 align-middle">
                       <Button variant="ghost" className="px-3 py-1.5 h-auto text-xs" onClick={() => setModalState({ isOpen: true, invoice: inv })}>
                         <Edit2 className="w-3.5 h-3.5" />
                       </Button>

@@ -171,7 +171,7 @@ export default function Scheduling() {
                       <div className="font-bold text-primary truncate">{getEmployeeName(shift.employeeId)}</div>
                       <div className="text-slate-500 mt-0.5">{shift.startTime} - {shift.endTime}</div>
                       {shift.notes && <div className="text-slate-400 truncate mt-0.5 italic">{shift.notes}</div>}
-                      <div className="absolute top-1 right-1 hidden group-hover:flex gap-1">
+                      <div className="absolute top-1 right-1 flex gap-1">
                         <button onClick={() => setModalState({ isOpen: true, shift })} className="p-0.5 bg-white rounded shadow-sm hover:bg-slate-100">
                           <Edit className="w-3 h-3 text-slate-500" />
                         </button>

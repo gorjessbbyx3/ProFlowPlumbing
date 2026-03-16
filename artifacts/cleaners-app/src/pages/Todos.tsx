@@ -90,7 +90,7 @@ export default function Todos() {
                 )}
               </div>
               
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+              <div className="flex gap-2  shrink-0">
                 <button onClick={() => setModalState({ isOpen: true, todo })} className="p-2 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg"><Edit2 className="w-4 h-4"/></button>
                 <button onClick={() => { if(confirm('Delete task?')) deleteMutation.mutate({id: todo.id}, {onSuccess: () => queryClient.invalidateQueries({queryKey: getListTodosQueryKey()})}) }} className="p-2 text-rose-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg"><Trash2 className="w-4 h-4"/></button>
               </div>

@@ -38,15 +38,20 @@ export default {
     }
 
     let body = null;
+    const contentType = request.headers.get("content-type") || "";
     if (method === "POST" || method === "PATCH" || method === "PUT") {
-      try { body = await request.json(); } catch { body = {}; }
+      if (contentType.includes("multipart/form-data")) {
+        body = null; // FormData handled in route via request
+      } else {
+        try { body = await request.json(); } catch { body = {}; }
+      }
     }
     const query = Object.fromEntries(url.searchParams);
 
     try {
       const match = matchRoute(method, path, routes);
       if (!match) return err("Not found", 404);
-      return await match.handler({ db, params: match.params, body, query });
+      return await match.handler({ db, params: match.params, body, query, request });
     } catch (e) {
       console.error(e);
       return err("Internal server error: " + e.message, 500);
@@ -215,6 +220,89 @@ const routes = [
     return json(camelRow(row));
   }},
   { method: "DELETE", path: "/bookings/:id", handler: async ({ db, params }) => crudDelete(db, "bookings", params.id) },
+
+  // ── Booking Photos ──
+  { method: "GET", path: "/bookings/:id/photos", handler: async ({ db, params }) => {
+    const bookingId = Number(params.id);
+    if (isNaN(bookingId)) return err("Invalid ID");
+    const { results } = await db.prepare("SELECT * FROM booking_photos WHERE booking_id = ?").bind(bookingId).all();
+    return json(results.map(camelRow));
+  }},
+  { method: "POST", path: "/bookings/:id/photos", handler: async ({ db, params, request }) => {
+    const bookingId = Number(params.id);
+    if (isNaN(bookingId)) return err("Invalid ID");
+    const booking = await db.prepare("SELECT id FROM bookings WHERE id = ?").bind(bookingId).first();
+    if (!booking) return err("Booking not found", 404);
+
+    const formData = await request.formData();
+    const file = formData.get("photo");
+    const photoType = formData.get("type");
+    const caption = formData.get("caption") || null;
+
+    if (!file || !(file instanceof File)) return err("No photo uploaded");
+    if (!photoType || !["before", "after"].includes(photoType)) return err("type must be before or after");
+
+    // Convert file to base64 data URI for storage (no filesystem on Workers)
+    const buffer = await file.arrayBuffer();
+    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const mimeType = file.type || "image/jpeg";
+    const dataUri = `data:${mimeType};base64,${base64}`;
+
+    const info = await db.prepare(
+      "INSERT INTO booking_photos (booking_id, type, file_path, caption, created_at) VALUES (?, ?, ?, ?, ?)"
+    ).bind(bookingId, photoType, dataUri, caption, now()).run();
+    const row = await db.prepare("SELECT * FROM booking_photos WHERE id = ?").bind(info.meta.last_row_id).first();
+    return json(camelRow(row), 201);
+  }},
+  { method: "DELETE", path: "/bookings/:id/photos/:photoId", handler: async ({ db, params }) => {
+    const bookingId = Number(params.id);
+    const photoId = Number(params.photoId);
+    if (isNaN(bookingId) || isNaN(photoId)) return err("Invalid ID");
+    const row = await db.prepare("SELECT id FROM booking_photos WHERE id = ? AND booking_id = ?").bind(photoId, bookingId).first();
+    if (!row) return err("Photo not found", 404);
+    await db.prepare("DELETE FROM booking_photos WHERE id = ?").bind(photoId).run();
+    return noContent();
+  }},
+
+  // ── Generate Recurring Bookings ──
+  { method: "POST", path: "/bookings/:id/generate-recurring", handler: async ({ db, params }) => {
+    const bookingId = Number(params.id);
+    if (isNaN(bookingId)) return err("Invalid ID");
+    const source = await db.prepare("SELECT * FROM bookings WHERE id = ?").bind(bookingId).first();
+    if (!source) return err("Booking not found", 404);
+    if (!source.recurrence_frequency) return err("Booking has no recurrence set");
+
+    const freq = source.recurrence_frequency;
+    const endDate = source.recurrence_end_date ? new Date(source.recurrence_end_date) : null;
+    const horizon = endDate || new Date(Date.now() + 90 * 24 * 60 * 60 * 1000); // 3 months default
+    const daysToAdd = freq === "weekly" ? 7 : freq === "biweekly" ? 14 : 30;
+    let currentDate = new Date(source.date);
+
+    // Find existing child bookings to avoid duplicates
+    const { results: existing } = await db.prepare("SELECT date FROM bookings WHERE parent_booking_id = ?").bind(bookingId).all();
+    const existingDates = new Set(existing.map(b => b.date));
+
+    const created = [];
+    for (let i = 0; i < 52; i++) {
+      currentDate = new Date(currentDate.getTime() + daysToAdd * 24 * 60 * 60 * 1000);
+      if (currentDate > horizon) break;
+      const dateStr = currentDate.toISOString().split("T")[0];
+      if (existingDates.has(dateStr)) continue;
+
+      const info = await db.prepare(
+        `INSERT INTO bookings (client_id, employee_id, service_type, status, date, time, location, notes,
+         estimated_price, client_name, client_phone, client_email, parent_booking_id, latitude, longitude, created_at, updated_at)
+         VALUES (?, ?, ?, 'scheduled', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      ).bind(
+        source.client_id, source.employee_id, source.service_type, dateStr, source.time,
+        source.location, source.notes, source.estimated_price, source.client_name,
+        source.client_phone, source.client_email, bookingId, source.latitude, source.longitude, now(), now()
+      ).run();
+      const row = await db.prepare("SELECT * FROM bookings WHERE id = ?").bind(info.meta.last_row_id).first();
+      created.push(camelRow(row));
+    }
+    return json(created);
+  }},
 
   // ── Invoices ──
   { method: "GET", path: "/invoices", handler: async ({ db, query }) => {

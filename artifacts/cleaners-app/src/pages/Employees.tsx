@@ -84,7 +84,7 @@ export default function Employees() {
                   <td className="p-4 text-sm font-medium text-slate-700 capitalize">{emp.role}</td>
                   <td className="p-4 text-sm font-bold text-slate-900">{formatCurrency(emp.hourlyRate)}/hr</td>
                   <td className="p-4"><Badge className={getStatusColor(emp.status)}>{emp.status}</Badge></td>
-                  <td className="p-4 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <td className="p-4 text-right space-x-2 ">
                     <Button variant="outline" className="px-3 py-1.5 h-auto text-xs" onClick={() => setModalState({ isOpen: true, employee: emp })}>
                       <Edit2 className="w-3.5 h-3.5" />
                     </Button>

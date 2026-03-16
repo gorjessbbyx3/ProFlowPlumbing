@@ -60,7 +60,7 @@ export default function Clients() {
                 <div className="w-12 h-12 rounded-full bg-primary/10 text-primary flex items-center justify-center font-display font-bold text-xl">
                   {client.name.charAt(0).toUpperCase()}
                 </div>
-                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex gap-2 ">
                   <button onClick={() => setModalState({ isOpen: true, client })} className="p-1.5 text-slate-400 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-lg"><Edit2 className="w-4 h-4"/></button>
                   <button onClick={() => { if(confirm('Delete client?')) deleteMutation.mutate({id: client.id}, {onSuccess: () => queryClient.invalidateQueries({queryKey: getListClientsQueryKey()})}) }} className="p-1.5 text-rose-400 hover:text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg"><Trash2 className="w-4 h-4"/></button>
                 </div>
