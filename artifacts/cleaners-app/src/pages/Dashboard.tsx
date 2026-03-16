@@ -469,39 +469,105 @@ export default function Dashboard() {
             </div>
           </Card>
 
-          {/* Financial Snapshot */}
+          {/* Enhanced Financial Dashboard */}
           <Card className="animate-fade-in-scale stagger-6">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-50">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Financial Snapshot</h2>
+                <h2 className="font-display font-bold text-lg">Financial Dashboard</h2>
               </div>
               <button onClick={() => navigate("/reports")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 Reports <ArrowRight className="w-3 h-3" />
               </button>
             </div>
             <div className="px-5 pb-5 space-y-4">
+              {/* P&L Cards */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100">
-                  <p className="text-xs font-bold text-emerald-600 uppercase tracking-wider">Revenue</p>
-                  <p className="text-xl font-black text-emerald-700 mt-1">{formatCurrency(stats?.totalRevenue)}</p>
+                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100">
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">This Month Revenue</p>
+                  <p className="text-xl font-black text-emerald-700 mt-0.5">{formatCurrency(financial?.thisMonth?.revenue || stats?.totalRevenue || "0")}</p>
+                  {financial?.revenueGrowth && parseFloat(financial.revenueGrowth) !== 0 && (
+                    <p className={`text-[10px] font-bold mt-0.5 ${parseFloat(financial.revenueGrowth) > 0 ? "text-emerald-500" : "text-rose-500"}`}>
+                      {parseFloat(financial.revenueGrowth) > 0 ? "↑" : "↓"} {Math.abs(parseFloat(financial.revenueGrowth))}% vs last month
+                    </p>
+                  )}
                 </div>
-                <div className="p-4 rounded-2xl bg-rose-50 border border-rose-100">
-                  <p className="text-xs font-bold text-rose-600 uppercase tracking-wider">Expenses</p>
-                  <p className="text-xl font-black text-rose-700 mt-1">{formatCurrency(recentExpenseTotal)}</p>
+                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100">
+                  <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Expenses + Labor</p>
+                  <p className="text-xl font-black text-rose-700 mt-0.5">{formatCurrency(parseFloat(financial?.thisMonth?.expenses || "0") + parseFloat(financial?.thisMonth?.labor || "0"))}</p>
                 </div>
               </div>
-              <div className="p-4 rounded-2xl bg-gradient-to-r from-primary/5 to-cyan-500/5 border border-primary/10">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-bold text-primary uppercase tracking-wider">Net Position</p>
-                  <TrendingUp className="w-4 h-4 text-primary" />
+
+              {/* Profit + MRR */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-primary/5 to-cyan-500/5 border border-primary/10">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Net Profit</p>
+                    <TrendingUp className="w-3.5 h-3.5 text-primary" />
+                  </div>
+                  <p className="text-xl font-black text-primary mt-0.5">{formatCurrency(financial?.thisMonth?.profit || (parseFloat(stats?.totalRevenue || "0") - recentExpenseTotal))}</p>
                 </div>
-                <p className="text-2xl font-black text-primary mt-1">
-                  {formatCurrency(parseFloat(stats?.totalRevenue || "0") - recentExpenseTotal)}
-                </p>
+                <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-100">
+                  <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Recurring MRR</p>
+                  <p className="text-xl font-black text-purple-700 mt-0.5">{formatCurrency(financial?.mrr || "0")}</p>
+                  {financial?.activeSubscriptions > 0 && <p className="text-[10px] text-purple-500 font-medium mt-0.5">{financial.activeSubscriptions} active subscriptions</p>}
+                </div>
               </div>
+
+              {/* AR + GET Tax */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                  <p className="text-[10px] font-bold text-amber-600 uppercase">Receivable</p>
+                  <p className="text-base font-black text-amber-700">{formatCurrency(financial?.accountsReceivable?.total || "0")}</p>
+                  <p className="text-[10px] text-amber-500">{financial?.accountsReceivable?.count || 0} unpaid</p>
+                </div>
+                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                  <p className="text-[10px] font-bold text-slate-600 uppercase">GET Tax Owed</p>
+                  <p className="text-base font-black text-slate-700">{formatCurrency(financial?.getOwed || "0")}</p>
+                  <p className="text-[10px] text-slate-400">4.712% Hawaii GET</p>
+                </div>
+              </div>
+
+              {/* Revenue Chart */}
+              {financial?.monthlyRevenue?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Revenue Trend (6 months)</p>
+                  <div className="h-32">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={(() => {
+                        const revMap = Object.fromEntries((financial.monthlyRevenue || []).map((r: any) => [r.month, parseFloat(r.revenue)]));
+                        const expMap = Object.fromEntries((financial.monthlyExpenses || []).map((e: any) => [e.month, parseFloat(e.expenses)]));
+                        const months = new Set([...Object.keys(revMap), ...Object.keys(expMap)]);
+                        return Array.from(months).sort().map(m => ({ month: m.slice(5), revenue: revMap[m] || 0, expenses: expMap[m] || 0 }));
+                      })()}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
+                        <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} width={40} />
+                        <Tooltip formatter={(v: number) => "$" + v.toFixed(2)} contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid #e2e8f0" }} />
+                        <Bar dataKey="revenue" fill="#003087" radius={[4, 4, 0, 0]} />
+                        <Bar dataKey="expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </div>
+              )}
+
+              {/* Top Clients */}
+              {financial?.topClients?.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Top Clients</p>
+                  <div className="space-y-1.5">
+                    {financial.topClients.slice(0, 3).map((c: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between text-sm">
+                        <span className="text-slate-700 font-medium truncate">{c.client_name}</span>
+                        <span className="text-emerald-600 font-bold shrink-0 ml-2">{formatCurrency(c.total)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
         </div>

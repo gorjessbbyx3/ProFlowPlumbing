@@ -5,9 +5,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/Layout";
 import { Card, Button, Modal, FormField, Badge } from "@/components/ui";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Edit2, Trash2, Plus, Calendar as CalendarIcon, MapPin, Anchor, Car, Home, Camera, Repeat } from "lucide-react";
+import { Edit2, Trash2, Plus, Calendar as CalendarIcon, MapPin, Anchor, Car, Home, Camera, Repeat, FileText, Package, Navigation, ExternalLink, Share2 } from "lucide-react";
 import type { Booking } from "@workspace/api-client-react";
 import BookingPhotos from "@/components/BookingPhotos";
+import SupplyUsageModal from "@/components/SupplyUsageModal";
 
 export default function Bookings() {
   const queryClient = useQueryClient();
@@ -22,6 +23,31 @@ export default function Bookings() {
 
   const [modalState, setModalState] = useState<{ isOpen: boolean; booking?: Booking }>({ isOpen: false });
   const [photoBookingId, setPhotoBookingId] = useState<number | null>(null);
+  const [supplyBookingId, setSupplyBookingId] = useState<number | null>(null);
+  const [invoiceMsg, setInvoiceMsg] = useState<string | null>(null);
+
+  const handleAutoInvoice = async (bookingId: number) => {
+    try {
+      const res = await fetch(`/api/bookings/${bookingId}/invoice`, { method: "POST" });
+      const data = await res.json();
+      if (res.ok) {
+        const fullUrl = window.location.origin + data.shareUrl;
+        setInvoiceMsg(`Invoice ${data.invoiceNumber} created! Total: $${parseFloat(data.total).toFixed(2)}\n\nShare link: ${fullUrl}`);
+        try { await navigator.clipboard.writeText(fullUrl); } catch {}
+      } else {
+        setInvoiceMsg(data.error || "Failed to create invoice");
+      }
+    } catch { setInvoiceMsg("Error creating invoice"); }
+  };
+
+  const handleNavigate = (booking: any) => {
+    const loc = booking.location;
+    if (booking.latitude && booking.longitude) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${booking.latitude},${booking.longitude}`, "_blank");
+    } else if (loc) {
+      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(loc)}`, "_blank");
+    }
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -167,21 +193,36 @@ export default function Bookings() {
                 )}
               </div>
 
-              <div className="p-4 border-t border-border/50 bg-slate-50/50 flex gap-2 justify-end">
-                <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setPhotoBookingId(booking.id)}>
-                  <Camera className="w-4 h-4 mr-1" /> Photos
-                </Button>
-                {booking.recurrenceFrequency && (
-                  <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => handleGenerateRecurring(booking.id)} disabled={generateRecurring.isPending}>
-                    <Repeat className="w-4 h-4 mr-1" /> Generate
+              <div className="p-4 border-t border-border/50 bg-slate-50/50">
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {booking.location && (
+                    <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => handleNavigate(booking)}>
+                      <Navigation className="w-4 h-4 mr-1" /> Navigate
+                    </Button>
+                  )}
+                  <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setPhotoBookingId(booking.id)}>
+                    <Camera className="w-4 h-4 mr-1" /> Photos
                   </Button>
-                )}
-                <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setModalState({ isOpen: true, booking })}>
-                  <Edit2 className="w-4 h-4 mr-1" /> Edit
-                </Button>
-                <Button variant="destructive" className="h-10 px-3 text-xs" onClick={() => { if(confirm('Delete booking?')) deleteMutation.mutate({ id: booking.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() })}) }}>
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                  <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setSupplyBookingId(booking.id)}>
+                    <Package className="w-4 h-4 mr-1" /> Supplies
+                  </Button>
+                  {booking.status === "completed" && (
+                    <Button variant="outline" className="h-10 px-3 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => handleAutoInvoice(booking.id)}>
+                      <FileText className="w-4 h-4 mr-1" /> Invoice
+                    </Button>
+                  )}
+                  {booking.recurrenceFrequency && (
+                    <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => handleGenerateRecurring(booking.id)} disabled={generateRecurring.isPending}>
+                      <Repeat className="w-4 h-4 mr-1" /> Generate
+                    </Button>
+                  )}
+                  <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setModalState({ isOpen: true, booking })}>
+                    <Edit2 className="w-4 h-4 mr-1" /> Edit
+                  </Button>
+                  <Button variant="destructive" className="h-10 px-3 text-xs" onClick={() => { if(confirm('Delete booking?')) deleteMutation.mutate({ id: booking.id }, { onSuccess: () => queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() })}) }}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))
@@ -191,6 +232,26 @@ export default function Bookings() {
       {/* Photo Modal */}
       {photoBookingId && (
         <BookingPhotos bookingId={photoBookingId} onClose={() => setPhotoBookingId(null)} />
+      )}
+
+      {/* Supply Usage Modal */}
+      {supplyBookingId && (
+        <SupplyUsageModal bookingId={supplyBookingId} onClose={() => { setSupplyBookingId(null); queryClient.invalidateQueries({ queryKey: getListBookingsQueryKey() }); }} />
+      )}
+
+      {/* Invoice Message */}
+      {invoiceMsg && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setInvoiceMsg(null)}>
+          <div className="bg-white rounded-2xl p-6 max-w-sm w-full" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-emerald-50"><FileText className="w-5 h-5 text-emerald-600" /></div>
+              <h3 className="font-bold text-lg">Invoice Created</h3>
+            </div>
+            <p className="text-sm text-slate-600 whitespace-pre-line">{invoiceMsg}</p>
+            <p className="text-xs text-slate-400 mt-2">Link copied to clipboard</p>
+            <button onClick={() => setInvoiceMsg(null)} className="mt-4 w-full bg-primary text-white py-2.5 rounded-xl font-bold text-sm">Done</button>
+          </div>
+        </div>
       )}
 
       <Modal
