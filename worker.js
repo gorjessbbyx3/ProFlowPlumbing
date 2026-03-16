@@ -965,6 +965,106 @@ const routes = [
     const dayRevenue = stops.reduce((s, b) => s + parseFloat(b.estimatedPrice || "0"), 0);
     return json({ date: params.date, stops, totalStops: stops.length, estimatedRevenue: dayRevenue.toFixed(2) });
   }},
+
+  // ── Service Pricing ──
+  { method: "GET", path: "/services", handler: async ({ db }) => {
+    // Auto-seed if empty
+    const cnt = await db.prepare("SELECT COUNT(*) as c FROM service_pricing").first();
+    if (cnt.c === 0) {
+      const seed = [
+        ["Car Detailing","Basic Wash & Dry","Exterior wash, dry, tire shine","35.00","per vehicle","30 min",1],
+        ["Car Detailing","Full Interior Clean","Vacuum, wipe down, windows, air freshener","75.00","per vehicle","1 hr",2],
+        ["Car Detailing","Complete Detail Package","Full exterior/interior detail, wax, leather condition","175.00","per vehicle","2-3 hrs",3],
+        ["Car Detailing","Engine Bay Clean","Degrease and detail engine compartment","65.00","per vehicle","45 min",4],
+        ["Car Detailing","Ceramic Coating","Paint protection ceramic coat application","350.00","per vehicle","4-5 hrs",5],
+        ["Boat Cleaning","Deck Wash & Rinse","Pressure wash deck, hull rinse","125.00","per boat","1 hr",6],
+        ["Boat Cleaning","Full Boat Detail","Hull, deck, cabin, windows, wax","350.00","per boat","3-4 hrs",7],
+        ["Boat Cleaning","Bottom Paint & Barnacle","Hull scrape, bottom paint touch-up","450.00","per boat","4-5 hrs",8],
+        ["Boat Cleaning","Cabin Deep Clean","Interior cabin detail, upholstery, galley","200.00","per boat","2 hrs",9],
+        ["Condo/Home","Standard Cleaning","Vacuum, mop, dust, bathrooms, kitchen","150.00","per unit","2 hrs",10],
+        ["Condo/Home","Deep Clean","Baseboards, inside appliances, windows, grout","250.00","per unit","3-4 hrs",11],
+        ["Condo/Home","Move-In/Move-Out","Full property clean for turnovers","350.00","per unit","4-6 hrs",12],
+        ["Condo/Home","Vacation Rental Turnover","Quick turnover clean between guests","125.00","per unit","1.5 hrs",13],
+        ["Condo/Home","Lanai & Outdoor","Power wash lanai, clean outdoor furniture","85.00","per unit","1 hr",14],
+        ["Add-Ons","Window Cleaning (interior)","All windows + tracks + sills","45.00","per visit","30 min",15],
+        ["Add-Ons","Refrigerator Deep Clean","Empty, clean, sanitize fridge","35.00","per unit","30 min",16],
+        ["Add-Ons","Oven Deep Clean","Full oven + range detail","40.00","per unit","30 min",17],
+        ["Add-Ons","Laundry Service","Wash, dry, fold 1 load","25.00","per load","1 hr",18],
+        ["Add-Ons","Carpet Shampooing","Hot water extraction per room","65.00","per room","45 min",19],
+        ["Commercial","Office Cleaning","Desks, floors, restrooms, kitchen","200.00","per visit","2 hrs",20],
+        ["Commercial","Lobby & Common Area","High-traffic area detail","175.00","per visit","1.5 hrs",21],
+        ["Commercial","Post-Construction","Dust, debris, window, floor cleanup","500.00","per job","4-8 hrs",22],
+      ];
+      const stmt = db.prepare("INSERT INTO service_pricing (category, name, description, base_price, unit, duration_estimate, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)");
+      await db.batch(seed.map(s => stmt.bind(s[0], s[1], s[2], s[3], s[4], s[5], s[6])));
+    }
+    const { results } = await db.prepare("SELECT * FROM service_pricing WHERE is_active = 1 ORDER BY sort_order").all();
+    return json(results.map(r => ({ ...camelRow(r), isActive: !!r.is_active })));
+  }},
+  { method: "POST", path: "/services", handler: async ({ db, body }) => {
+    const d = sc(body);
+    const { sql, vals } = buildInsert("service_pricing", { category: d.category, name: d.name, description: d.description || null, base_price: d.base_price, unit: d.unit || "per job", duration_estimate: d.duration_estimate || null, is_active: 1, sort_order: d.sort_order || 0, created_at: now(), updated_at: now() });
+    const info = await db.prepare(sql).bind(...vals).run();
+    const row = await db.prepare("SELECT * FROM service_pricing WHERE id = ?").bind(info.meta.last_row_id).first();
+    return json({ ...camelRow(row), isActive: !!row.is_active }, 201);
+  }},
+  { method: "PATCH", path: "/services/:id", handler: async ({ db, params, body }) => {
+    const d = sc(body);
+    if (d.is_active !== undefined) d.is_active = d.is_active ? 1 : 0;
+    const u = buildUpdate("service_pricing", d, params.id);
+    if (!u) return err("No fields");
+    await db.prepare(u.sql).bind(...u.vals).run();
+    const row = await db.prepare("SELECT * FROM service_pricing WHERE id = ?").bind(params.id).first();
+    return row ? json({ ...camelRow(row), isActive: !!row.is_active }) : err("Not found", 404);
+  }},
+  { method: "DELETE", path: "/services/:id", handler: async ({ db, params }) => crudDelete(db, "service_pricing", params.id) },
+
+  // ── Membership Plans ──
+  { method: "GET", path: "/membership-plans", handler: async ({ db }) => {
+    // Auto-seed if empty
+    const cnt = await db.prepare("SELECT COUNT(*) as c FROM membership_plans").first();
+    if (cnt.c === 0) {
+      const plans = [
+        ["Ohana Basic","basic","monthly","299.00","Perfect for regular home maintenance",JSON.stringify(["1 standard condo clean per week","Basic supplies included","Same-day booking","Text/call scheduling"]),"0",1],
+        ["Ohana Plus","standard","monthly","549.00","Our most popular — homes + vehicles",JSON.stringify(["1 standard condo clean per week","1 full car detail per month","Priority scheduling","All supplies included","10% off add-on services"]),"10",2],
+        ["Ohana Premium","premium","monthly","899.00","The complete package — home, car & boat",JSON.stringify(["1 deep clean per week","2 full car details per month","1 boat deck wash per month","VIP priority scheduling","All supplies included","15% off all add-ons","Free window cleaning monthly","Dedicated crew assigned"]),"15",3],
+        ["Boat Club","standard","monthly","399.00","Keep your vessel pristine",JSON.stringify(["2 deck washes per month","1 cabin clean per month","Hull inspection","Marine-grade products","Harbor pickup/drop-off"]),"5",4],
+        ["Fleet Plan","premium","monthly","199.00","Per-vehicle fleet pricing",JSON.stringify(["Weekly exterior wash per vehicle","Monthly full detail per vehicle","Fleet dashboard & reports","Volume discount pricing","On-site service available"]),"20",5],
+        ["Vacation Rental Pro","standard","monthly","449.00","For Airbnb/VRBO hosts",JSON.stringify(["Unlimited turnover cleans (up to 8/mo)","Same-day turnover capability","Linen change service","Restocking toiletries check","Photo-ready quality guarantee","Guest review boost program"]),"0",6],
+      ];
+      const stmt = db.prepare("INSERT INTO membership_plans (name, tier, frequency, price, description, features, discount_pct, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+      await db.batch(plans.map(p => stmt.bind(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])));
+    }
+    const { results } = await db.prepare("SELECT * FROM membership_plans WHERE is_active = 1 ORDER BY sort_order").all();
+    return json(results.map(r => {
+      const c = camelRow(r);
+      c.isActive = !!r.is_active;
+      try { c.features = JSON.parse(r.features); } catch { c.features = []; }
+      return c;
+    }));
+  }},
+  { method: "POST", path: "/membership-plans", handler: async ({ db, body }) => {
+    const d = sc(body);
+    const features = Array.isArray(body.features) ? JSON.stringify(body.features) : d.features || "[]";
+    const { sql, vals } = buildInsert("membership_plans", { name: d.name, tier: d.tier || "standard", frequency: d.frequency || "monthly", price: d.price, description: d.description || null, features, discount_pct: d.discount_pct || "0", is_active: 1, sort_order: d.sort_order || 0, created_at: now(), updated_at: now() });
+    const info = await db.prepare(sql).bind(...vals).run();
+    const row = await db.prepare("SELECT * FROM membership_plans WHERE id = ?").bind(info.meta.last_row_id).first();
+    const c = camelRow(row); c.isActive = !!row.is_active; try { c.features = JSON.parse(row.features); } catch { c.features = []; }
+    return json(c, 201);
+  }},
+  { method: "PATCH", path: "/membership-plans/:id", handler: async ({ db, params, body }) => {
+    const d = sc(body);
+    if (Array.isArray(body.features)) d.features = JSON.stringify(body.features);
+    if (d.is_active !== undefined) d.is_active = d.is_active ? 1 : 0;
+    const u = buildUpdate("membership_plans", d, params.id);
+    if (!u) return err("No fields");
+    await db.prepare(u.sql).bind(...u.vals).run();
+    const row = await db.prepare("SELECT * FROM membership_plans WHERE id = ?").bind(params.id).first();
+    if (!row) return err("Not found", 404);
+    const c = camelRow(row); c.isActive = !!row.is_active; try { c.features = JSON.parse(row.features); } catch { c.features = []; }
+    return json(c);
+  }},
+  { method: "DELETE", path: "/membership-plans/:id", handler: async ({ db, params }) => crudDelete(db, "membership_plans", params.id) },
 ];
 
 // Convert snake_case DB rows to camelCase for the frontend
