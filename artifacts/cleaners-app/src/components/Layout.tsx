@@ -33,7 +33,6 @@ const navGroups = [
       { name: "Invoices", href: "/invoices", icon: FileText },
       { name: "Money", href: "/money", icon: CreditCard },
       { name: "Subscriptions", href: "/subscriptions", icon: Repeat },
-      { name: "Reports", href: "/reports", icon: LineChart },
     ],
   },
   {
@@ -44,6 +43,7 @@ const navGroups = [
       { name: "Labor", href: "/labor", icon: Clock },
       { name: "To-Dos", href: "/todos", icon: CheckSquare },
       { name: "Campaigns", href: "/campaigns", icon: Megaphone },
+      { name: "Reports", href: "/reports", icon: LineChart },
     ],
   },
 ];
