@@ -9,22 +9,45 @@ import {
 import logo from "@assets/Untitled-1_1773440534890.png";
 import { cn } from "@/lib/utils";
 
-const navItems = [
-  { name: "Dashboard", href: "/", icon: LayoutDashboard },
-  { name: "Bookings", href: "/bookings", icon: BookOpenCheck },
-  { name: "Schedule & Map", href: "/scheduling", icon: CalendarDays },
-  { name: "Employees", href: "/employees", icon: Users },
-  { name: "Clients", href: "/clients", icon: BriefcaseBusiness },
-  { name: "Invoices", href: "/invoices", icon: FileText },
-  { name: "Receipts & Expenses", href: "/money", icon: CreditCard },
-  { name: "Purchase Orders", href: "/purchase-orders", icon: ClipboardList },
-  { name: "Inventory", href: "/inventory", icon: Package },
-  { name: "Labor Tracker", href: "/labor", icon: Clock },
-  { name: "To-Do List", href: "/todos", icon: CheckSquare },
-  { name: "Follow-ups", href: "/followups", icon: PhoneCall },
-  { name: "Campaigns", href: "/campaigns", icon: Megaphone },
-  { name: "Tax Reports", href: "/reports", icon: LineChart },
+const navGroups = [
+  {
+    label: "Main",
+    items: [
+      { name: "Dashboard", href: "/", icon: LayoutDashboard },
+      { name: "Bookings", href: "/bookings", icon: BookOpenCheck },
+      { name: "Schedule", href: "/scheduling", icon: CalendarDays },
+    ],
+  },
+  {
+    label: "People",
+    items: [
+      { name: "Employees", href: "/employees", icon: Users },
+      { name: "Clients", href: "/clients", icon: BriefcaseBusiness },
+      { name: "Follow-ups", href: "/followups", icon: PhoneCall },
+    ],
+  },
+  {
+    label: "Finances",
+    items: [
+      { name: "Invoices", href: "/invoices", icon: FileText },
+      { name: "Money", href: "/money", icon: CreditCard },
+      { name: "Labor", href: "/labor", icon: Clock },
+      { name: "Reports", href: "/reports", icon: LineChart },
+    ],
+  },
+  {
+    label: "Operations",
+    items: [
+      { name: "Inventory", href: "/inventory", icon: Package },
+      { name: "POs", href: "/purchase-orders", icon: ClipboardList },
+      { name: "To-Dos", href: "/todos", icon: CheckSquare },
+      { name: "Campaigns", href: "/campaigns", icon: Megaphone },
+    ],
+  },
 ];
+
+// Flat list for desktop sidebar
+const navItems = navGroups.flatMap(g => g.items);
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const [location] = useLocation();
@@ -32,30 +55,88 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex overflow-hidden selection:bg-primary/20">
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Overlay */}
       {mobileMenuOpen && (
         <div
-          className="fixed inset-0 bg-black/20 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 lg:hidden"
           onClick={() => setMobileMenuOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={cn(
-        "fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:flex flex-col shadow-2xl lg:shadow-none",
-        mobileMenuOpen ? "translate-x-0" : "-translate-x-full"
+      {/* Mobile Navigation — Bottom Sheet */}
+      <div className={cn(
+        "fixed inset-x-0 bottom-0 z-50 lg:hidden transform transition-transform duration-300 ease-out",
+        mobileMenuOpen ? "translate-y-0" : "translate-y-full"
       )}>
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
-            <div>
-              <h1 className="font-display font-bold text-primary leading-tight text-lg">All Purpose Cleaners</h1>
-              <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
+        <div className="bg-white rounded-t-3xl shadow-2xl max-h-[85vh] flex flex-col">
+          {/* Handle + header */}
+          <div className="flex flex-col items-center pt-3 pb-2 border-b border-slate-100 shrink-0">
+            <div className="w-10 h-1 rounded-full bg-slate-300 mb-3" />
+            <div className="flex items-center justify-between w-full px-5 pb-1">
+              <div className="flex items-center gap-2.5">
+                <img src={logo} alt="Logo" className="h-8 w-auto max-w-[100px] object-contain rounded-lg" />
+                <span className="font-display font-bold text-primary text-base">808 Cleaners</span>
+              </div>
+              <button
+                onClick={() => setMobileMenuOpen(false)}
+                className="p-2 -mr-1 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
           </div>
-          <button className="lg:hidden text-slate-400 hover:text-slate-700" onClick={() => setMobileMenuOpen(false)}>
-            <X className="w-6 h-6" />
-          </button>
+
+          {/* Scrollable grouped nav */}
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-5">
+            {navGroups.map((group) => (
+              <div key={group.label}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2 px-1">{group.label}</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {group.items.map((item) => {
+                    const isActive = location === item.href;
+                    return (
+                      <Link
+                        key={item.name}
+                        href={item.href}
+                        onClick={() => setMobileMenuOpen(false)}
+                        className={cn(
+                          "flex flex-col items-center justify-center gap-1.5 py-3 px-2 rounded-2xl text-center transition-all min-h-[68px] active:scale-95",
+                          isActive
+                            ? "bg-primary text-white shadow-md shadow-primary/25"
+                            : "bg-slate-50 text-slate-600 hover:bg-slate-100"
+                        )}
+                      >
+                        <item.icon className={cn("w-5 h-5", isActive ? "text-white" : "text-slate-400")} />
+                        <span className={cn("text-[11px] font-semibold leading-tight", isActive ? "text-white" : "text-slate-600")}>
+                          {item.name}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Compact footer */}
+          <div className="px-5 py-3 border-t border-slate-100 flex items-center gap-3 bg-slate-50/80 shrink-0">
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">L</div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-slate-700 truncate">Lainecaldera@aol.com</p>
+              <p className="text-[10px] text-slate-400">808-723-1011</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 flex-col lg:static">
+        <div className="p-6 border-b border-slate-100 flex items-center gap-3">
+          <img src={logo} alt="All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
+          <div>
+            <h1 className="font-display font-bold text-primary leading-tight text-lg">All Purpose Cleaners</h1>
+            <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
+          </div>
         </div>
 
         <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 custom-scrollbar">
@@ -65,7 +146,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <Link
                 key={item.name}
                 href={item.href}
-                onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   "flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 group",
                   isActive
@@ -89,18 +169,17 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-screen overflow-hidden relative">
-        {/* Top Header (Mobile mainly) */}
-        <header className="lg:hidden bg-white border-b border-slate-200 h-16 flex items-center px-4 justify-between sticky top-0 z-30">
-          <div className="flex items-center gap-3">
-            <img src={logo} alt="Logo" className="h-8 w-auto max-w-[120px] object-contain rounded" />
-            <span className="font-display font-bold text-primary">All Purpose Cleaners</span>
+        {/* Mobile Top Header */}
+        <header className="lg:hidden bg-white border-b border-slate-200 h-14 flex items-center px-4 justify-between sticky top-0 z-30">
+          <div className="flex items-center gap-2.5">
+            <img src={logo} alt="Logo" className="h-7 w-auto max-w-[100px] object-contain rounded" />
+            <span className="font-display font-bold text-primary text-sm">808 Cleaners</span>
           </div>
-          <button onClick={() => setMobileMenuOpen(true)} className="p-2 -mr-2 rounded-xl text-slate-500 hover:bg-slate-100">
+          <button onClick={() => setMobileMenuOpen(true)} className="p-2 -mr-2 rounded-xl text-slate-500 hover:bg-slate-100 active:scale-95 transition">
             <Menu className="w-6 h-6" />
           </button>
         </header>
 
-        {/* Decorative background element */}
         <div className="absolute top-0 left-0 right-0 h-64 bg-primary/5 -z-10 blur-3xl opacity-50 pointer-events-none" />
 
         <main className="flex-1 overflow-y-auto p-4 md:p-8 z-0 relative custom-scrollbar">
