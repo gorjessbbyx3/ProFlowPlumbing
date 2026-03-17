@@ -6,7 +6,7 @@ import {
   Clock, CheckSquare, PhoneCall, Megaphone, LineChart,
   Menu, X, Package, ClipboardList, Repeat, Droplets
 } from "lucide-react";
-import logo from "@assets/Untitled-1_1773440534890.png";
+const logo = "/logo.png";
 import { cn } from "@/lib/utils";
 import NotificationBell from "./NotificationBell";
 

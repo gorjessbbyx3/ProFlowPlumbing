@@ -48,7 +48,7 @@ import {
   Star,
 } from "lucide-react";
 import { useLocation } from "wouter";
-import logo from "@assets/Untitled-1_1773440534890.png";
+const logo = "/logo.png";
 
 type Todo = ListTodosQueryResult[number];
 type Followup = ListFollowupsQueryResult[number];
