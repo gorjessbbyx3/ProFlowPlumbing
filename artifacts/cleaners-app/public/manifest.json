@@ -1,21 +1,21 @@
 {
-  "name": "All Purpose Cleaners",
-  "short_name": "Cleaners",
-  "description": "Business dashboard for All Purpose Cleaners",
-  "start_url": "/cleanersdashboard/",
-  "scope": "/cleanersdashboard/",
+  "name": "808 All Purpose Cleaners",
+  "short_name": "808 Cleaners",
+  "description": "Business dashboard for 808 All Purpose Cleaners",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#003087",
   "orientation": "any",
   "icons": [
     {
-      "src": "/cleanersdashboard/assets/icon-192.png",
+      "src": "/assets/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "/cleanersdashboard/assets/icon-512.png",
+      "src": "/assets/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

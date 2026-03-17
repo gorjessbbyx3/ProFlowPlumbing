@@ -51,8 +51,11 @@ export default function PricingServices() {
   const [planForm, setPlanForm] = useState(emptyPlan);
 
   const load = async () => {
-    const [sRes, pRes] = await Promise.all([fetch("/api/services"), fetch("/api/membership-plans")]);
-    setServices(await sRes.json()); setPlans(await pRes.json()); setLoading(false);
+    try {
+      const [sRes, pRes] = await Promise.all([fetch("/api/services"), fetch("/api/membership-plans")]);
+      setServices(await sRes.json()); setPlans(await pRes.json());
+    } catch (e) { console.error("Failed to load pricing:", e); }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -67,23 +70,27 @@ export default function PricingServices() {
   const openEditService = (s: Service) => { setEditingServiceId(s.id); setServiceForm({ category: s.category, name: s.name, description: s.description || "", basePrice: s.basePrice, unit: s.unit, durationEstimate: s.durationEstimate || "" }); setShowServiceForm(true); };
   const submitService = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingServiceId) await fetch(`/api/services/${editingServiceId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serviceForm) });
-    else await fetch("/api/services", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serviceForm) });
+    try {
+      if (editingServiceId) await fetch(`/api/services/${editingServiceId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serviceForm) });
+      else await fetch("/api/services", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(serviceForm) });
+    } catch (e) { console.error(e); }
     setShowServiceForm(false); load();
   };
-  const deleteService = async (id: number) => { if (confirm("Delete this service?")) { await fetch(`/api/services/${id}`, { method: "DELETE" }); load(); } };
+  const deleteService = async (id: number) => { if (confirm("Delete this service?")) { try { await fetch(`/api/services/${id}`, { method: "DELETE" }); } catch (e) { console.error(e); } load(); } };
 
   // Plan CRUD
   const openCreatePlan = () => { setEditingPlanId(null); setPlanForm(emptyPlan); setShowPlanForm(true); };
   const openEditPlan = (p: Plan) => { setEditingPlanId(p.id); setPlanForm({ name: p.name, tier: p.tier, frequency: p.frequency, price: p.price, description: p.description || "", features: p.features.length ? p.features : [""], discountPct: p.discountPct }); setShowPlanForm(true); };
   const submitPlan = async (e: React.FormEvent) => {
     e.preventDefault();
-    const payload = { ...planForm, features: planForm.features.filter(f => f.trim()) };
-    if (editingPlanId) await fetch(`/api/membership-plans/${editingPlanId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-    else await fetch("/api/membership-plans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    try {
+      const payload = { ...planForm, features: planForm.features.filter(f => f.trim()) };
+      if (editingPlanId) await fetch(`/api/membership-plans/${editingPlanId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+      else await fetch("/api/membership-plans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+    } catch (e) { console.error(e); }
     setShowPlanForm(false); load();
   };
-  const deletePlan = async (id: number) => { if (confirm("Delete this plan?")) { await fetch(`/api/membership-plans/${id}`, { method: "DELETE" }); load(); } };
+  const deletePlan = async (id: number) => { if (confirm("Delete this plan?")) { try { await fetch(`/api/membership-plans/${id}`, { method: "DELETE" }); } catch (e) { console.error(e); } load(); } };
 
   const addFeature = () => setPlanForm({ ...planForm, features: [...planForm.features, ""] });
   const removeFeature = (i: number) => setPlanForm({ ...planForm, features: planForm.features.filter((_, idx) => idx !== i) });

@@ -157,7 +157,7 @@ export default function Labor() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {entries.map((entry: LaborItem) => {
+          {entries?.map((entry: LaborItem) => {
             const empName = employees?.find((emp: EmployeeItem) => emp.id === entry.employeeId)?.name || `Employee #${entry.employeeId}`;
             return (
               <Card key={entry.id} className="p-4 flex items-center justify-between">

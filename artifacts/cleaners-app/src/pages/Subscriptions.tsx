@@ -19,8 +19,11 @@ export default function Subscriptions() {
   const [form, setForm] = useState(emptyForm);
 
   const load = async () => {
-    const [subsRes, statsRes] = await Promise.all([fetch("/api/subscriptions"), fetch("/api/subscriptions/stats/mrr")]);
-    setSubs(await subsRes.json()); setStats(await statsRes.json()); setLoading(false);
+    try {
+      const [subsRes, statsRes] = await Promise.all([fetch("/api/subscriptions"), fetch("/api/subscriptions/stats/mrr")]);
+      setSubs(await subsRes.json()); setStats(await statsRes.json());
+    } catch (e) { console.error("Failed to load subscriptions:", e); }
+    setLoading(false);
   };
   useEffect(() => { load(); }, []);
 
@@ -29,13 +32,15 @@ export default function Subscriptions() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editingId) await fetch(`/api/subscriptions/${editingId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
-    else await fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    try {
+      if (editingId) await fetch(`/api/subscriptions/${editingId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+      else await fetch("/api/subscriptions", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(form) });
+    } catch (e) { console.error(e); }
     setShowForm(false); load();
   };
-  const handleDelete = async (id: number) => { if (confirm("Cancel this subscription?")) { await fetch(`/api/subscriptions/${id}`, { method: "DELETE" }); load(); } };
+  const handleDelete = async (id: number) => { if (confirm("Cancel this subscription?")) { try { await fetch(`/api/subscriptions/${id}`, { method: "DELETE" }); } catch (e) { console.error(e); } load(); } };
   const toggleStatus = async (s: Sub) => {
-    await fetch(`/api/subscriptions/${s.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: s.status === "active" ? "paused" : "active" }) });
+    try { await fetch(`/api/subscriptions/${s.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: s.status === "active" ? "paused" : "active" }) }); } catch (e) { console.error(e); }
     load();
   };
 

@@ -138,7 +138,7 @@ export default function Followups() {
         </Card>
       ) : (
         <div className="grid gap-3">
-          {followups.map((f: FollowupItem) => (
+          {followups?.map((f: FollowupItem) => (
             <Card key={f.id} className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <div className="w-10 h-10 rounded-full bg-violet-100 flex items-center justify-center">

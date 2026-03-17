@@ -77,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between w-full px-5 pb-1">
               <div className="flex items-center gap-2.5">
                 <img src={logo} alt="Logo" className="h-8 w-auto max-w-[100px] object-contain rounded-lg" />
-                <span className="font-display font-bold text-primary text-base">808 Cleaners</span>
+                <span className="font-display font-bold text-primary text-base">808 All Purpose Cleaners</span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -135,9 +135,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 flex-col lg:static">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
+            <img src={logo} alt="808 All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
             <div>
-              <h1 className="font-display font-bold text-primary leading-tight text-lg">All Purpose Cleaners</h1>
+              <h1 className="font-display font-bold text-primary leading-tight text-lg">808 All Purpose Cleaners</h1>
               <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
             </div>
           </div>
@@ -178,7 +178,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="lg:hidden bg-white border-b border-slate-200 h-14 flex items-center px-4 justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2.5">
             <img src={logo} alt="Logo" className="h-7 w-auto max-w-[100px] object-contain rounded" />
-            <span className="font-display font-bold text-primary text-sm">808 Cleaners</span>
+            <span className="font-display font-bold text-primary text-sm">808 All Purpose Cleaners</span>
           </div>
           <div className="flex items-center gap-1">
             <NotificationBell />

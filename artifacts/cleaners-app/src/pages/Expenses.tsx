@@ -34,14 +34,16 @@ export default function Expenses() {
   // Fetch expenses
   const fetchExpenses = async () => {
     setIsLoading(true);
-    const params = new URLSearchParams();
-    if (filterCategory) params.set("category", filterCategory);
-    if (startDate) params.set("startDate", startDate);
-    if (endDate) params.set("endDate", endDate);
-    const qs = params.toString();
-    const res = await fetch(`/api/expenses${qs ? "?" + qs : ""}`);
-    const data = await res.json();
-    setExpenses(data);
+    try {
+      const params = new URLSearchParams();
+      if (filterCategory) params.set("category", filterCategory);
+      if (startDate) params.set("startDate", startDate);
+      if (endDate) params.set("endDate", endDate);
+      const qs = params.toString();
+      const res = await fetch(`/api/expenses${qs ? "?" + qs : ""}`);
+      const data = await res.json();
+      setExpenses(data);
+    } catch (e) { console.error("Failed to load expenses:", e); }
     setIsLoading(false);
   };
 
@@ -75,20 +77,22 @@ export default function Expenses() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fd = new FormData();
-    fd.append("category", form.category);
-    fd.append("description", form.description);
-    fd.append("amount", form.amount);
-    fd.append("date", form.date);
-    if (form.vendor) fd.append("vendor", form.vendor);
-    if (form.notes) fd.append("notes", form.notes);
-    if (receiptFile) fd.append("receiptImage", receiptFile);
+    try {
+      const fd = new FormData();
+      fd.append("category", form.category);
+      fd.append("description", form.description);
+      fd.append("amount", form.amount);
+      fd.append("date", form.date);
+      if (form.vendor) fd.append("vendor", form.vendor);
+      if (form.notes) fd.append("notes", form.notes);
+      if (receiptFile) fd.append("receiptImage", receiptFile);
 
-    if (editingId) {
-      await fetch(`/api/expenses/${editingId}`, { method: "PATCH", body: fd });
-    } else {
-      await fetch("/api/expenses", { method: "POST", body: fd });
-    }
+      if (editingId) {
+        await fetch(`/api/expenses/${editingId}`, { method: "PATCH", body: fd });
+      } else {
+        await fetch("/api/expenses", { method: "POST", body: fd });
+      }
+    } catch (e) { console.error("Failed to save expense:", e); }
 
     setShowForm(false);
     setEditingId(null);
@@ -100,7 +104,7 @@ export default function Expenses() {
 
   const handleDelete = async (id: number) => {
     if (confirm("Delete this expense?")) {
-      await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      try { await fetch(`/api/expenses/${id}`, { method: "DELETE" }); } catch (e) { console.error(e); }
       fetchExpenses();
     }
   };

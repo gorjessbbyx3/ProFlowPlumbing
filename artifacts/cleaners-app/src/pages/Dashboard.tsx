@@ -221,7 +221,7 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <img src={logo} alt="All Purpose Cleaners" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
+              <img src={logo} alt="808 All Purpose Cleaners" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
             </div>
           </div>
 

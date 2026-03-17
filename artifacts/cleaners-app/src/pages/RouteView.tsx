@@ -18,8 +18,10 @@ export default function RouteView() {
 
   const load = async (d: string) => {
     setLoading(true);
-    const res = await fetch(`/api/bookings/route/${d}`);
-    setRoute(await res.json());
+    try {
+      const res = await fetch(`/api/bookings/route/${d}`);
+      setRoute(await res.json());
+    } catch (e) { console.error("Failed to load route:", e); }
     setLoading(false);
   };
   useEffect(() => { load(date); }, [date]);

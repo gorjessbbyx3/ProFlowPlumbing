@@ -153,7 +153,7 @@ export default function Campaigns() {
         </Card>
       ) : (
         <div className="grid gap-4">
-          {campaigns.map((c: CampaignItem) => (
+          {campaigns?.map((c: CampaignItem) => (
             <Card key={c.id} className="p-5">
               <div className="flex items-start justify-between">
                 <div className="flex items-start gap-4">

@@ -26,7 +26,7 @@ export default function Receipts() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    fetch("/api/expenses").then(r => r.json()).then(data => { setExpenses(data); setIsLoading(false); });
+    fetch("/api/expenses").then(r => r.json()).then(data => { setExpenses(data); setIsLoading(false); }).catch(() => setIsLoading(false));
   }, []);
 
   // Only expenses with receipt images
