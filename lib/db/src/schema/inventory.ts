@@ -5,7 +5,7 @@ import { z } from "zod/v4";
 export const inventoryTable = pgTable("inventory", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  category: text("category").notNull(), // "cleaning_supplies" | "cleaning_tools" | "toiletries"
+  category: text("category").notNull(), // "pipes_fittings" | "plumbing_tools" | "fixtures" | "sealants_adhesives"
   quantity: integer("quantity").notNull().default(0),
   unit: text("unit").notNull().default("units"), // units, bottles, boxes, rolls, etc.
   minStock: integer("min_stock").default(0),

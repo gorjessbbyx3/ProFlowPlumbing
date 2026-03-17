@@ -48,7 +48,7 @@ export default function SupplyUsageModal({ bookingId, onClose }: { bookingId: nu
         <div className="sticky top-0 bg-white border-b border-slate-200 px-5 py-4 rounded-t-2xl flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Package className="w-5 h-5 text-primary" />
-            <h2 className="font-bold text-lg">Supplies Used</h2>
+            <h2 className="font-bold text-lg">Parts & Materials Used</h2>
           </div>
           <button onClick={onClose} className="p-2 rounded-full hover:bg-slate-100"><X className="w-5 h-5 text-slate-400" /></button>
         </div>
@@ -72,7 +72,7 @@ export default function SupplyUsageModal({ bookingId, onClose }: { bookingId: nu
           {loading ? <p className="text-center text-slate-400 py-4">Loading...</p> : usages.length === 0 ? (
             <div className="text-center py-6">
               <Package className="w-10 h-10 text-slate-200 mx-auto mb-2" />
-              <p className="text-sm text-slate-400">No supplies logged for this job yet.</p>
+              <p className="text-sm text-slate-400">No parts logged for this job yet.</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -91,7 +91,7 @@ export default function SupplyUsageModal({ bookingId, onClose }: { bookingId: nu
           {/* Total */}
           {usages.length > 0 && (
             <div className="flex items-center justify-between p-3 rounded-xl bg-primary/5 border border-primary/10">
-              <span className="font-bold text-primary text-sm">Total Supply Cost</span>
+              <span className="font-bold text-primary text-sm">Total Parts Cost</span>
               <span className="font-black text-primary">{formatCurrency(totalCost)}</span>
             </div>
           )}

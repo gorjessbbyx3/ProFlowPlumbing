@@ -3,7 +3,7 @@ import { Card, Badge } from "@/components/ui";
 import { PageHeader } from "@/components/Layout";
 import { formatCurrency } from "@/lib/utils";
 import {
-  Car, Anchor, Home, Sparkles, Building2, Pencil, Trash2, Plus, X, Clock,
+  Droplets, Wrench, ShowerHead, AlertTriangle, Building2, Pencil, Trash2, Plus, X, Clock,
   Check, Crown, Star, Zap, Shield, ChevronDown, ChevronUp, DollarSign, Tag
 } from "lucide-react";
 
@@ -16,26 +16,26 @@ interface Plan {
   description: string | null; features: string[]; discountPct: string; sortOrder: number;
 }
 
-const CATEGORIES = ["Car Detailing", "Boat Cleaning", "Condo/Home", "Add-Ons", "Commercial"];
+const CATEGORIES = ["Drain Services", "Pipe Repair", "Water Heater", "Emergency", "Commercial"];
 const categoryIcon: Record<string, React.ReactNode> = {
-  "Car Detailing": <Car className="w-5 h-5" />,
-  "Boat Cleaning": <Anchor className="w-5 h-5" />,
-  "Condo/Home": <Home className="w-5 h-5" />,
-  "Add-Ons": <Sparkles className="w-5 h-5" />,
+  "Drain Services": <Droplets className="w-5 h-5" />,
+  "Pipe Repair": <Wrench className="w-5 h-5" />,
+  "Water Heater": <ShowerHead className="w-5 h-5" />,
+  "Emergency": <AlertTriangle className="w-5 h-5" />,
   "Commercial": <Building2 className="w-5 h-5" />,
 };
 const categoryColor: Record<string, string> = {
-  "Car Detailing": "from-blue-500 to-blue-600",
-  "Boat Cleaning": "from-cyan-500 to-teal-600",
-  "Condo/Home": "from-amber-500 to-orange-600",
-  "Add-Ons": "from-purple-500 to-violet-600",
+  "Drain Services": "from-blue-500 to-blue-600",
+  "Pipe Repair": "from-cyan-500 to-teal-600",
+  "Water Heater": "from-amber-500 to-orange-600",
+  "Emergency": "from-rose-500 to-red-600",
   "Commercial": "from-slate-600 to-slate-700",
 };
 const tierIcon: Record<string, React.ReactNode> = { basic: <Star className="w-5 h-5" />, standard: <Zap className="w-5 h-5" />, premium: <Crown className="w-5 h-5" /> };
 const tierColor: Record<string, string> = { basic: "from-slate-500 to-slate-600", standard: "from-primary to-blue-700", premium: "from-amber-500 to-amber-600" };
 const tierBorder: Record<string, string> = { basic: "border-slate-200", standard: "border-primary/30 ring-2 ring-primary/10", premium: "border-amber-300 ring-2 ring-amber-100" };
 
-const emptyService = { category: "Car Detailing", name: "", description: "", basePrice: "", unit: "per job", durationEstimate: "" };
+const emptyService = { category: "Drain Services", name: "", description: "", basePrice: "", unit: "per job", durationEstimate: "" };
 const emptyPlan = { name: "", tier: "standard", frequency: "monthly", price: "", description: "", features: [""], discountPct: "0" };
 
 export default function PricingServices() {
@@ -182,7 +182,7 @@ export default function PricingServices() {
         <div className="flex items-center justify-between mb-5">
           <div>
             <h2 className="text-2xl font-extrabold text-slate-900 tracking-tight">Membership Plans</h2>
-            <p className="text-slate-500 text-sm mt-0.5">Recurring service packages for loyal clients</p>
+            <p className="text-slate-500 text-sm mt-0.5">Recurring maintenance plans for homeowners and businesses</p>
           </div>
           <button onClick={openCreatePlan} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl font-bold hover:opacity-90 min-h-[44px] text-sm">
             <Plus className="w-4 h-4" /> Add Plan

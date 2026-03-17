@@ -95,14 +95,14 @@ function ProgressRing({ percent, size = 56, stroke = 5, color = "text-primary" }
 }
 
 const quickActions = [
-  { label: "Book a Job", icon: CalendarDays, href: "/bookings", gradient: "from-blue-500 to-blue-600" },
+  { label: "New Work Order", icon: CalendarDays, href: "/bookings", gradient: "from-blue-500 to-blue-600" },
   { label: "Create Invoice", icon: FileText, href: "/invoices", gradient: "from-amber-500 to-orange-500" },
   { label: "Log Expense", icon: DollarSign, href: "/expenses", gradient: "from-rose-500 to-pink-500" },
   { label: "Add a Task", icon: ClipboardList, href: "/todos", gradient: "from-emerald-500 to-green-600" },
   { label: "Save Receipt", icon: Receipt, href: "/receipts", gradient: "from-teal-500 to-cyan-500" },
   { label: "Follow Up", icon: PhoneCall, href: "/followups", gradient: "from-violet-500 to-purple-600" },
   { label: "Add to PO", icon: ClipboardList, href: "/purchase-orders", gradient: "from-cyan-500 to-teal-500" },
-  { label: "Job Map", icon: MapPin, href: "/map", gradient: "from-indigo-500 to-blue-500" },
+  { label: "Dispatch Map", icon: MapPin, href: "/map", gradient: "from-indigo-500 to-blue-500" },
 ];
 
 export default function Dashboard() {
@@ -179,10 +179,10 @@ export default function Dashboard() {
   }
 
   const statCards = [
-    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600", trend: "scheduled today" },
+    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600", trend: "work orders today" },
     { title: "Outstanding", value: stats?.pendingInvoices || 0, icon: FileText, gradient: "from-amber-500 to-orange-500", bgLight: "bg-amber-50", textColor: "text-amber-600", trend: "invoices unpaid" },
     { title: "Revenue", value: formatCurrency(stats?.totalRevenue), icon: TrendingUp, gradient: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50", textColor: "text-emerald-600", trend: "total earned" },
-    { title: "Team", value: stats?.activeEmployees || 0, icon: Users, gradient: "from-purple-500 to-violet-600", bgLight: "bg-purple-50", textColor: "text-purple-600", trend: "active members" },
+    { title: "Technicians", value: stats?.activeEmployees || 0, icon: Users, gradient: "from-purple-500 to-violet-600", bgLight: "bg-purple-50", textColor: "text-purple-600", trend: "active in field" },
   ];
 
   const todayFormatted = new Date().toLocaleDateString("en-US", {
@@ -221,7 +221,7 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <img src={logo} alt="808 All Purpose Cleaners" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
+              <img src={logo} alt="ProFlow Plumbing" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
             </div>
           </div>
 
@@ -285,7 +285,7 @@ export default function Dashboard() {
                 <div className="p-2 rounded-xl bg-blue-50">
                   <Clock className="w-4 h-4 text-blue-600" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Today's Schedule</h2>
+                <h2 className="font-display font-bold text-lg">Today's Dispatch</h2>
               </div>
               <button onClick={() => navigate("/scheduling")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 View all <ArrowRight className="w-3 h-3" />
@@ -295,9 +295,9 @@ export default function Dashboard() {
               {todaysShifts.length === 0 ? (
                 <div className="text-center py-8 text-slate-400">
                   <Waves className="w-10 h-10 mx-auto mb-2 text-slate-200" />
-                  <p className="text-sm font-medium">No shifts scheduled today</p>
+                  <p className="text-sm font-medium">No jobs dispatched today</p>
                   <button onClick={() => navigate("/scheduling")} className="text-xs text-primary font-bold mt-2 hover:underline">
-                    Schedule a shift
+                    Dispatch a job
                   </button>
                 </div>
               ) : (
@@ -414,7 +414,7 @@ export default function Dashboard() {
                 <div className="p-2 rounded-xl bg-primary/10">
                   <Briefcase className="w-4 h-4 text-primary" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Recent Bookings</h2>
+                <h2 className="font-display font-bold text-lg">Recent Work Orders</h2>
               </div>
               <button onClick={() => navigate("/bookings")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 View all <ArrowRight className="w-3 h-3" />
@@ -424,9 +424,9 @@ export default function Dashboard() {
               {!stats?.recentBookings?.length ? (
                 <div className="text-center py-8 text-slate-400">
                   <CalendarDays className="w-10 h-10 mx-auto mb-2 text-slate-200" />
-                  <p className="text-sm font-medium">No bookings yet</p>
+                  <p className="text-sm font-medium">No work orders yet</p>
                   <button onClick={() => navigate("/bookings")} className="text-xs text-primary font-bold mt-2 hover:underline">
-                    Create first booking
+                    Create first work order
                   </button>
                 </div>
               ) : (
@@ -526,7 +526,7 @@ export default function Dashboard() {
                 <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
                   <p className="text-[10px] font-bold text-slate-600 uppercase">GET Tax Owed</p>
                   <p className="text-base font-black text-slate-700">{formatCurrency(financial?.getOwed || "0")}</p>
-                  <p className="text-[10px] text-slate-400">4.712% Hawaii GET</p>
+                  <p className="text-[10px] text-slate-400">Hawaii GET 4.712%</p>
                 </div>
               </div>
 

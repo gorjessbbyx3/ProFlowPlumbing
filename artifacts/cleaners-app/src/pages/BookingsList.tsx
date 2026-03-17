@@ -5,7 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { PageHeader } from "@/components/Layout";
 import { Card, Button, Modal, FormField, Badge } from "@/components/ui";
 import { formatCurrency, formatDate, getStatusColor } from "@/lib/utils";
-import { Edit2, Trash2, Plus, Calendar as CalendarIcon, MapPin, Anchor, Car, Home, Camera, Repeat, FileText, Package, Navigation, ExternalLink, Share2 } from "lucide-react";
+import { Edit2, Trash2, Plus, Calendar as CalendarIcon, MapPin, Droplets, Wrench, ShowerHead, AlertTriangle, Camera, Repeat, FileText, Package, Navigation, ExternalLink, Share2 } from "lucide-react";
 import type { Booking } from "@workspace/api-client-react";
 import BookingPhotos from "@/components/BookingPhotos";
 import SupplyUsageModal from "@/components/SupplyUsageModal";
@@ -118,17 +118,18 @@ export default function BookingsList() {
 
   const getServiceIcon = (type: string) => {
     const t = type.toLowerCase();
-    if (t.includes('boat')) return <Anchor className="w-4 h-4" />;
-    if (t.includes('car')) return <Car className="w-4 h-4" />;
-    return <Home className="w-4 h-4" />;
+    if (t.includes('drain')) return <Droplets className="w-4 h-4" />;
+    if (t.includes('emergency')) return <AlertTriangle className="w-4 h-4" />;
+    if (t.includes('water heater') || t.includes('fixture')) return <ShowerHead className="w-4 h-4" />;
+    return <Wrench className="w-4 h-4" />;
   };
 
   return (
     <div className="animate-fade-in pb-12">
       <PageHeader
-        title="Bookings"
-        description="Manage client jobs and service appointments."
-        action={<Button onClick={() => setModalState({ isOpen: true })}><Plus className="w-4 h-4 mr-2"/> Book a Job</Button>}
+        title="Work Orders"
+        description="Manage plumbing jobs, service calls, and appointments."
+        action={<Button onClick={() => setModalState({ isOpen: true })}><Plus className="w-4 h-4 mr-2"/> New Work Order</Button>}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
@@ -137,7 +138,7 @@ export default function BookingsList() {
         ) : bookings?.length === 0 ? (
            <div className="col-span-full text-center p-12 bg-white rounded-3xl border border-dashed border-slate-300">
              <CalendarIcon className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-             <h3 className="text-lg font-bold text-slate-900">No bookings yet</h3>
+             <h3 className="text-lg font-bold text-slate-900">No work orders yet</h3>
            </div>
         ) : (
           bookings?.map(booking => (
@@ -204,7 +205,7 @@ export default function BookingsList() {
                     <Camera className="w-4 h-4 mr-1" /> Photos
                   </Button>
                   <Button variant="outline" className="h-10 px-3 text-xs" onClick={() => setSupplyBookingId(booking.id)}>
-                    <Package className="w-4 h-4 mr-1" /> Supplies
+                    <Package className="w-4 h-4 mr-1" /> Parts
                   </Button>
                   {booking.status === "completed" && (
                     <Button variant="outline" className="h-10 px-3 text-xs text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => handleAutoInvoice(booking.id)}>
@@ -257,7 +258,7 @@ export default function BookingsList() {
       <Modal
         isOpen={modalState.isOpen}
         onClose={() => setModalState({ isOpen: false })}
-        title={modalState.booking ? "Edit Booking" : "Book a Job"}
+        title={modalState.booking ? "Edit Work Order" : "New Work Order"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
@@ -272,10 +273,18 @@ export default function BookingsList() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Service Type" name="serviceType" type="select" required defaultValue={modalState.booking?.serviceType || "Car Detail"} options={[
-              { label: "Car Detail", value: "Car Detail" },
-              { label: "Boat Detail", value: "Boat Detail" },
-              { label: "Condo Cleaning", value: "Condo Cleaning" },
+            <FormField label="Service Type" name="serviceType" type="select" required defaultValue={modalState.booking?.serviceType || "Drain Cleaning"} options={[
+              { label: "Drain Cleaning", value: "Drain Cleaning" },
+              { label: "Pipe Repair", value: "Pipe Repair" },
+              { label: "Leak Detection", value: "Leak Detection" },
+              { label: "Water Heater Service", value: "Water Heater Service" },
+              { label: "Fixture Installation", value: "Fixture Installation" },
+              { label: "Sewer Line Service", value: "Sewer Line Service" },
+              { label: "Emergency Plumbing", value: "Emergency Plumbing" },
+              { label: "Hydro Jetting", value: "Hydro Jetting" },
+              { label: "Backflow Prevention", value: "Backflow Prevention" },
+              { label: "Commercial Plumbing", value: "Commercial Plumbing" },
+              { label: "Inspection", value: "Inspection" },
               { label: "Other", value: "Other" }
             ]} />
             <FormField label="Status" name="status" type="select" defaultValue={modalState.booking?.status || "scheduled"} options={[
@@ -314,7 +323,7 @@ export default function BookingsList() {
 
           <div className="pt-4 flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={() => setModalState({ isOpen: false })}>Cancel</Button>
-            <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>Save Booking</Button>
+            <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>Save Work Order</Button>
           </div>
         </form>
       </Modal>

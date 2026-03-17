@@ -50,10 +50,10 @@ export default function Employees() {
 
   return (
     <div className="animate-fade-in">
-      <PageHeader 
-        title="Employees" 
-        description="Manage your cleaning staff and their details."
-        action={<Button onClick={() => setModalState({ isOpen: true })}><Plus className="w-4 h-4 mr-2"/> Add Employee</Button>}
+      <PageHeader
+        title="Technicians"
+        description="Manage your plumbing technicians and field staff."
+        action={<Button onClick={() => setModalState({ isOpen: true })}><Plus className="w-4 h-4 mr-2"/> Add Technician</Button>}
       />
 
       <Card className="overflow-x-auto">
@@ -70,9 +70,9 @@ export default function Employees() {
           </thead>
           <tbody className="divide-y divide-border/40">
             {isLoading ? (
-              <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading employees...</td></tr>
+              <tr><td colSpan={6} className="p-8 text-center text-slate-500">Loading technicians...</td></tr>
             ) : employees?.length === 0 ? (
-              <tr><td colSpan={6} className="p-8 text-center text-slate-500">No employees found.</td></tr>
+              <tr><td colSpan={6} className="p-8 text-center text-slate-500">No technicians found.</td></tr>
             ) : (
               employees?.map((emp) => (
                 <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors group">
@@ -99,10 +99,10 @@ export default function Employees() {
         </table>
       </Card>
 
-      <Modal 
-        isOpen={modalState.isOpen} 
-        onClose={() => setModalState({ isOpen: false })} 
-        title={modalState.employee ? "Edit Employee" : "Add Employee"}
+      <Modal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ isOpen: false })}
+        title={modalState.employee ? "Edit Technician" : "Add Technician"}
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <FormField label="Full Name" name="name" required defaultValue={modalState.employee?.name} />
@@ -111,12 +111,14 @@ export default function Employees() {
             <FormField label="Phone" name="phone" defaultValue={modalState.employee?.phone || ""} />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Role" name="role" type="select" defaultValue={modalState.employee?.role || "cleaner"} options={[
-              { label: "Cleaner", value: "cleaner" },
-              { label: "Supervisor", value: "supervisor" },
+            <FormField label="Role" name="role" type="select" defaultValue={modalState.employee?.role || "plumber"} options={[
+              { label: "Plumber", value: "plumber" },
+              { label: "Master Plumber", value: "master_plumber" },
+              { label: "Apprentice", value: "apprentice" },
+              { label: "Dispatcher", value: "dispatcher" },
               { label: "Admin", value: "admin" }
             ]} />
-            <FormField label="Hourly Rate ($)" name="hourlyRate" type="number" required defaultValue={modalState.employee?.hourlyRate || "15.00"} />
+            <FormField label="Hourly Rate ($)" name="hourlyRate" type="number" required defaultValue={modalState.employee?.hourlyRate || "25.00"} />
           </div>
           <FormField label="Status" name="status" type="select" defaultValue={modalState.employee?.status || "active"} options={[
             { label: "Active", value: "active" },
@@ -125,7 +127,7 @@ export default function Employees() {
           
           <div className="pt-4 flex justify-end gap-3">
             <Button type="button" variant="ghost" onClick={() => setModalState({ isOpen: false })}>Cancel</Button>
-            <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>Save Employee</Button>
+            <Button type="submit" isLoading={createMutation.isPending || updateMutation.isPending}>Save Technician</Button>
           </div>
         </form>
       </Modal>

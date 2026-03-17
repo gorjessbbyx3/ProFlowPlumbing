@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BookOpenCheck, DollarSign, Crown } from "lucide-react";
+import { Wrench, DollarSign, Crown } from "lucide-react";
 import BookingsList from "./BookingsList";
 import PricingServices from "./PricingServices";
 
@@ -15,7 +15,7 @@ export default function Bookings() {
             tab === "bookings" ? "bg-primary text-white shadow-md" : "text-slate-600 hover:bg-slate-50"
           }`}
         >
-          <BookOpenCheck className="w-4 h-4" /> Bookings
+          <Wrench className="w-4 h-4" /> Work Orders
         </button>
         <button
           onClick={() => setTab("pricing")}

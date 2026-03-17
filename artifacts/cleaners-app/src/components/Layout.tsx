@@ -1,10 +1,10 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "wouter";
 import {
-  LayoutDashboard, Users, CalendarDays, BookOpenCheck,
+  LayoutDashboard, Users, CalendarDays, Wrench,
   BriefcaseBusiness, FileText, CreditCard,
   Clock, CheckSquare, PhoneCall, Megaphone, LineChart,
-  Menu, X, Package, ClipboardList, Repeat, Navigation
+  Menu, X, Package, ClipboardList, Repeat, Droplets
 } from "lucide-react";
 import logo from "@assets/Untitled-1_1773440534890.png";
 import { cn } from "@/lib/utils";
@@ -15,14 +15,14 @@ const navGroups = [
     label: "Main",
     items: [
       { name: "Dashboard", href: "/", icon: LayoutDashboard },
-      { name: "Bookings", href: "/bookings", icon: BookOpenCheck },
-      { name: "Schedule", href: "/scheduling", icon: CalendarDays },
+      { name: "Work Orders", href: "/bookings", icon: Wrench },
+      { name: "Dispatch", href: "/scheduling", icon: CalendarDays },
     ],
   },
   {
     label: "People",
     items: [
-      { name: "Employees", href: "/employees", icon: Users },
+      { name: "Technicians", href: "/employees", icon: Users },
       { name: "Clients", href: "/clients", icon: BriefcaseBusiness },
       { name: "Follow-ups", href: "/followups", icon: PhoneCall },
     ],
@@ -38,7 +38,7 @@ const navGroups = [
   {
     label: "Operations",
     items: [
-      { name: "Inventory", href: "/inventory", icon: Package },
+      { name: "Parts & Supplies", href: "/inventory", icon: Package },
       { name: "POs", href: "/purchase-orders", icon: ClipboardList },
       { name: "Labor", href: "/labor", icon: Clock },
       { name: "To-Dos", href: "/todos", icon: CheckSquare },
@@ -77,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between w-full px-5 pb-1">
               <div className="flex items-center gap-2.5">
                 <img src={logo} alt="Logo" className="h-8 w-auto max-w-[100px] object-contain rounded-lg" />
-                <span className="font-display font-bold text-primary text-base">808 All Purpose Cleaners</span>
+                <span className="font-display font-bold text-primary text-base">ProFlow Plumbing</span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -122,10 +122,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
           {/* Compact footer */}
           <div className="px-5 py-3 border-t border-slate-100 flex items-center gap-3 bg-slate-50/80 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">L</div>
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">P</div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-700 truncate">Lainecaldera@aol.com</p>
-              <p className="text-[10px] text-slate-400">808-723-1011</p>
+              <p className="text-xs font-bold text-slate-700 truncate">admin@proflowplumbing.com</p>
+              <p className="text-[10px] text-slate-400">808-555-0100</p>
             </div>
           </div>
         </div>
@@ -135,9 +135,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 flex-col lg:static">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="808 All Purpose Cleaners" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
+            <img src={logo} alt="ProFlow Plumbing" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
             <div>
-              <h1 className="font-display font-bold text-primary leading-tight text-lg">808 All Purpose Cleaners</h1>
+              <h1 className="font-display font-bold text-primary leading-tight text-lg">ProFlow Plumbing</h1>
               <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
             </div>
           </div>
@@ -167,8 +167,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-slate-100 m-3 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10">
           <p className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Admin Panel</p>
-          <p className="text-sm text-slate-600 font-medium truncate">Lainecaldera@aol.com</p>
-          <p className="text-xs text-slate-500 mt-0.5">808-723-1011</p>
+          <p className="text-sm text-slate-600 font-medium truncate">admin@proflowplumbing.com</p>
+          <p className="text-xs text-slate-500 mt-0.5">808-555-0100</p>
         </div>
       </aside>
 
@@ -178,7 +178,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="lg:hidden bg-white border-b border-slate-200 h-14 flex items-center px-4 justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2.5">
             <img src={logo} alt="Logo" className="h-7 w-auto max-w-[100px] object-contain rounded" />
-            <span className="font-display font-bold text-primary text-sm">808 All Purpose Cleaners</span>
+            <span className="font-display font-bold text-primary text-sm">ProFlow Plumbing</span>
           </div>
           <div className="flex items-center gap-1">
             <NotificationBell />

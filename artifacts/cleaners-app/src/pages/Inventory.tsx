@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { PageHeader } from "@/components/Layout";
 import { Card, Badge } from "@/components/ui";
-import { Plus, Trash2, Pencil, X, Package, AlertTriangle, SprayCan, Wrench, Bath } from "lucide-react";
+import { Plus, Trash2, Pencil, X, Package, AlertTriangle, Droplets, Wrench, ShowerHead, Layers } from "lucide-react";
 
 type InventoryItem = {
   id: number;
@@ -16,15 +16,16 @@ type InventoryItem = {
 };
 
 const CATEGORIES = [
-  { value: "cleaning_supplies", label: "Cleaning Supplies", icon: SprayCan, color: "bg-blue-100 text-blue-700 border-blue-200" },
-  { value: "cleaning_tools", label: "Cleaning Tools", icon: Wrench, color: "bg-amber-100 text-amber-700 border-amber-200" },
-  { value: "toiletries", label: "Toiletries", icon: Bath, color: "bg-pink-100 text-pink-700 border-pink-200" },
+  { value: "pipes_fittings", label: "Pipes & Fittings", icon: Droplets, color: "bg-blue-100 text-blue-700 border-blue-200" },
+  { value: "plumbing_tools", label: "Plumbing Tools", icon: Wrench, color: "bg-amber-100 text-amber-700 border-amber-200" },
+  { value: "fixtures", label: "Fixtures & Hardware", icon: ShowerHead, color: "bg-teal-100 text-teal-700 border-teal-200" },
+  { value: "sealants_adhesives", label: "Sealants & Adhesives", icon: Layers, color: "bg-purple-100 text-purple-700 border-purple-200" },
 ];
 
-const UNITS = ["units", "bottles", "boxes", "rolls", "packs", "bags", "gallons", "cans", "pairs"];
+const UNITS = ["units", "feet", "pcs", "boxes", "rolls", "packs", "bags", "gallons", "cans", "pairs", "sets"];
 
 type FormState = { name: string; category: string; quantity: string; unit: string; minStock: string; cost: string; supplier: string; notes: string };
-const emptyForm: FormState = { name: "", category: "cleaning_supplies", quantity: "0", unit: "units", minStock: "5", cost: "", supplier: "", notes: "" };
+const emptyForm: FormState = { name: "", category: "pipes_fittings", quantity: "0", unit: "units", minStock: "5", cost: "", supplier: "", notes: "" };
 
 export default function Inventory() {
   const [items, setItems] = useState<InventoryItem[]>([]);
@@ -109,7 +110,7 @@ export default function Inventory() {
   return (
     <div className="space-y-6 pb-12 animate-fade-in">
       <PageHeader
-        title="Inventory"
+        title="Parts & Supplies"
         description={`${items.length} items tracked${lowStock.length > 0 ? ` · ${lowStock.length} low stock` : ""}`}
         action={
           <button onClick={() => { setEditingId(null); setForm(emptyForm); setShowForm(true); }} className="inline-flex items-center gap-2 bg-primary text-white px-4 py-2.5 rounded-xl font-bold hover:opacity-90 transition min-h-[44px]">
@@ -160,7 +161,7 @@ export default function Inventory() {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Item Name *</label>
-              <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2" placeholder="e.g. All-Purpose Cleaner" />
+              <input type="text" required value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="w-full border rounded-lg px-3 py-2" placeholder="e.g. 1/2 inch PVC pipe" />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>

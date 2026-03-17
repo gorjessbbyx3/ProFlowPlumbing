@@ -131,7 +131,7 @@ export default function PurchaseOrders() {
       .notes { margin-top: 30px; padding: 15px; background: #f8f9fa; border-radius: 8px; font-size: 13px; }
       .footer { margin-top: 40px; text-align: center; color: #999; font-size: 12px; }
       @media print { body { padding: 20px; } }
-    </style></head><body>${content.innerHTML}<div class="footer">808 All Purpose Cleaners</div></body></html>`);
+    </style></head><body>${content.innerHTML}<div class="footer">ProFlow Plumbing</div></body></html>`);
     win.document.close();
     win.print();
   };
@@ -286,7 +286,7 @@ export default function PurchaseOrders() {
                   <p style={{ color: "#003087", fontWeight: "bold", fontSize: "16px", marginTop: "4px" }}>{viewingPO.poNumber}</p>
                 </div>
                 <div style={{ textAlign: "right" }}>
-                  <p style={{ fontWeight: "bold", fontSize: "18px" }}>808 All Purpose Cleaners</p>
+                  <p style={{ fontWeight: "bold", fontSize: "18px" }}>ProFlow Plumbing</p>
                   <p style={{ color: "#666", fontSize: "14px" }}>Date: {viewingPO.date}</p>
                   <p style={{ color: "#666", fontSize: "14px" }}>Status: {viewingPO.status}</p>
                 </div>
