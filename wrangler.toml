@@ -11,7 +11,7 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "proflowplumbing-db"
-database_id = "4796ae81-9da6-4180-a1e6-92c434209acd"
+database_id = "09e30cb1-2e25-4996-803a-d2c8a93444d6"
 
 [[routes]]
 pattern = "proflowplumbing.gorjess.co"
