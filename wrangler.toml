@@ -1,19 +1,19 @@
-name = "allpurposecleaners"
+name = "proflowplumbing"
 main = "worker.js"
 compatibility_date = "2024-12-01"
 workers_dev = true
 
 [assets]
-directory = "./artifacts/cleaners-app/dist/public"
+directory = "./artifacts/plumbing-app/dist/public"
 not_found_handling = "single-page-application"
 binding = "ASSETS"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "allpurposecleaners-db"
+database_name = "proflowplumbing-db"
 database_id = "4796ae81-9da6-4180-a1e6-92c434209acd"
 
 [[routes]]
-pattern = "allpurposecleaners.gorjess.co"
+pattern = "proflowplumbing.gorjess.co"
 zone_name = "gorjess.co"
 custom_domain = true

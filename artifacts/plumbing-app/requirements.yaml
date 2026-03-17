@@ -5,7 +5,7 @@ packages:
   "tailwind-merge": "Utility for merging tailwind classes without conflicts"
 
 images:
-  - path: "artifacts/cleaners-app/public/images/dashboard-bg.png"
+  - path: "artifacts/plumbing-app/public/images/dashboard-bg.png"
     description: "Subtle abstract geometric waves in deep navy blue and soft white, clean corporate professional background texture, low contrast"
     aspect_ratio: "16:9"
 

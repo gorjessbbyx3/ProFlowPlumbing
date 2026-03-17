@@ -1,4 +1,4 @@
-const CACHE_NAME = "cleaners-v1";
+const CACHE_NAME = "proflow-plumbing-v1";
 
 self.addEventListener("install", (event) => {
   self.skipWaiting();
