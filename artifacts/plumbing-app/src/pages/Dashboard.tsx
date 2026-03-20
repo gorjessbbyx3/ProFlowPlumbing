@@ -48,7 +48,6 @@ import {
   Star,
 } from "lucide-react";
 import { useLocation } from "wouter";
-const logo = "/logo.png";
 
 type Todo = ListTodosQueryResult[number];
 type Followup = ListFollowupsQueryResult[number];
@@ -194,51 +193,57 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-6 pb-12">
-      {/* Hero Section */}
-      <div className="relative rounded-2xl overflow-hidden animate-fade-in-scale">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4338ca] to-[#3730a3]" />
-        <div className="absolute inset-0">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/20 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
-        </div>
-        <div className="relative z-10 px-6 py-7 md:px-8 md:py-8">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 text-white/60 text-sm font-medium">
-                <CalendarDays className="w-4 h-4" />
-                {todayFormatted}
-              </div>
-              <div className="flex items-center gap-3">
-                <greeting.icon className="w-8 h-8 text-amber-300" />
-                <h1 className="text-3xl md:text-4xl font-display font-extrabold text-white">
-                  {greeting.text}
-                </h1>
-              </div>
-              <p className="text-white/70 font-medium text-base max-w-lg">
-                {greeting.subtext} You have <span className="text-white font-bold">{stats?.todayBookings || 0} jobs</span> today,{" "}
-                <span className="text-amber-300 font-bold">{stats?.pendingInvoices || 0} unpaid invoices</span>, and{" "}
-                <span className="text-white font-bold">{stats?.pendingTodos || 0} tasks</span> pending.
-              </p>
+      {/* ── Greeting + Live Pulse ── */}
+      <div className="animate-fade-in">
+        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
+          <div>
+            <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase tracking-widest mb-2">
+              <CalendarDays className="w-3.5 h-3.5" />
+              {todayFormatted}
             </div>
-            <div className="flex items-center gap-4">
-            </div>
+            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight leading-none">
+              {greeting.text}
+            </h1>
+            <p className="text-muted-foreground font-medium mt-1.5 text-sm">
+              {greeting.subtext}
+            </p>
           </div>
 
-          {/* Quick Actions - embedded in hero */}
-          <div className="grid grid-cols-4 sm:grid-cols-4 lg:grid-cols-7 gap-2 mt-6">
-            {quickActions.map((action) => (
-              <button
-                key={action.label}
-                onClick={() => navigate(action.href)}
-                className="flex flex-col items-center gap-1.5 p-2.5 rounded-2xl bg-white/10 hover:bg-white/20 border border-white/10 hover:border-white/20 transition-all duration-300 group"
-              >
-                <div className={cn("p-2 rounded-xl bg-gradient-to-br shadow-lg group-hover:scale-110 transition-transform", action.gradient)}>
-                  <action.icon className="w-4 h-4 text-white" />
-                </div>
-                <span className="text-xs font-bold text-white/80 group-hover:text-white transition-colors">{action.label}</span>
-              </button>
-            ))}
+          {/* Live pulse indicators */}
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-foreground text-background text-xs font-bold">
+              <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" /></span>
+              {stats?.todayBookings || 0} jobs today
+            </div>
+            {(stats?.pendingInvoices || 0) > 0 && (
+              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 text-amber-600 text-xs font-bold border border-amber-500/15">
+                <FileText className="w-3 h-3" />
+                {stats?.pendingInvoices} unpaid
+              </div>
+            )}
+            {(stats?.pendingTodos || 0) > 0 && (
+              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/5 text-primary text-xs font-bold border border-primary/10">
+                <CheckSquare className="w-3 h-3" />
+                {stats?.pendingTodos} tasks
+              </div>
+            )}
           </div>
+        </div>
+
+        {/* ── Quick Actions — horizontal scroll pills ── */}
+        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+          {quickActions.map((action) => (
+            <button
+              key={action.label}
+              onClick={() => navigate(action.href)}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/70 backdrop-blur-sm border border-border/50 hover:border-primary/20 hover:bg-primary/5 transition-all duration-200 group whitespace-nowrap shrink-0"
+            >
+              <div className={cn("p-1.5 rounded-lg bg-gradient-to-br", action.gradient)}>
+                <action.icon className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs font-semibold text-foreground/70 group-hover:text-foreground transition-colors">{action.label}</span>
+            </button>
+          ))}
         </div>
       </div>
 
