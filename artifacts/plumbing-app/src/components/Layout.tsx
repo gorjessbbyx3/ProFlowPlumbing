@@ -118,6 +118,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             ))}
           </div>
+
+          {/* Powered by */}
+          <div className="px-5 py-3 border-t border-white/5 shrink-0">
+            <a href="https://techsavvyhawaii.com" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-1.5">
+              <span className="text-[10px] text-white/25 font-medium">Powered by</span>
+              <span className="text-[10px] text-accent/60 font-bold">Tech Savvy Hawaii</span>
+            </a>
+          </div>
         </div>
       </div>
 
@@ -170,9 +178,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
           ))}
         </nav>
 
-        {/* Version tag */}
+        {/* Powered by */}
         <div className="px-5 py-4 border-t border-white/5">
-          <p className="text-[10px] text-white/20 font-medium">v1.0 · Cloudflare Workers + D1</p>
+          <a href="https://techsavvyhawaii.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 group">
+            <span className="text-[10px] text-white/25 font-medium group-hover:text-white/40 transition-colors">Powered by</span>
+            <span className="text-[10px] text-accent/60 font-bold group-hover:text-accent transition-colors">Tech Savvy Hawaii</span>
+          </a>
         </div>
       </aside>
 
