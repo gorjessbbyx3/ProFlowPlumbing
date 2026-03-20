@@ -43,6 +43,7 @@ CREATE TABLE IF NOT EXISTS bookings (
   parent_booking_id INTEGER,
   latitude TEXT,
   longitude TEXT,
+  campaign_id INTEGER REFERENCES campaigns(id) ON DELETE SET NULL,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -156,6 +157,7 @@ CREATE TABLE IF NOT EXISTS campaigns (
   target_audience TEXT,
   description TEXT,
   notes TEXT,
+  amount_spent TEXT DEFAULT '0',
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );

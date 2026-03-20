@@ -252,6 +252,7 @@ const routes = [
       client_phone: d.client_phone || null, client_email: d.client_email || null,
       recurrence_frequency: d.recurrence_frequency || null, recurrence_end_date: d.recurrence_end_date || null,
       parent_booking_id: d.parent_booking_id || null, latitude: d.latitude || null, longitude: d.longitude || null,
+      campaign_id: d.campaign_id || null,
       created_at: now(), updated_at: now(),
     });
     const info = await db.prepare(sql).bind(...vals).run();
@@ -582,6 +583,25 @@ const routes = [
   { method: "GET", path: "/campaigns/:id", handler: async ({ db, params }) => { const row = await db.prepare("SELECT * FROM campaigns WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
   { method: "PATCH", path: "/campaigns/:id", handler: async ({ db, params, body }) => { const u = buildUpdate("campaigns", sc(body), params.id); if (!u) return err("No fields"); await db.prepare(u.sql).bind(...u.vals).run(); const row = await db.prepare("SELECT * FROM campaigns WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
   { method: "DELETE", path: "/campaigns/:id", handler: async ({ db, params }) => crudDelete(db, "campaigns", params.id) },
+
+  // ── Campaign ROI ──
+  { method: "GET", path: "/campaigns/:id/roi", handler: async ({ db, params }) => {
+    const campaign = await db.prepare("SELECT * FROM campaigns WHERE id = ?").bind(params.id).first();
+    if (!campaign) return err("Not found", 404);
+    const { results: bookings } = await db.prepare("SELECT id, estimated_price, status, service_type, client_name, date FROM bookings WHERE campaign_id = ? ORDER BY date DESC").bind(params.id).all();
+    const totalRevenue = bookings.reduce((sum, b) => sum + parseFloat(b.estimated_price || "0"), 0);
+    const completedRevenue = bookings.filter(b => b.status === "completed").reduce((sum, b) => sum + parseFloat(b.estimated_price || "0"), 0);
+    const budget = parseFloat(campaign.budget || "0");
+    const spent = parseFloat(campaign.amount_spent || "0");
+    const roi = spent > 0 ? ((completedRevenue - spent) / spent * 100) : 0;
+    return json({ campaignId: params.id, budget, spent, totalRevenue, completedRevenue, roi: roi.toFixed(1), workOrderCount: bookings.length, completedCount: bookings.filter(b => b.status === "completed").length, workOrders: bookings.map(camelRow) });
+  }},
+
+  // ── Campaign Stats (all campaigns) ──
+  { method: "GET", path: "/campaigns/stats/roi", handler: async ({ db }) => {
+    const { results } = await db.prepare(`SELECT c.id, c.name, c.budget, c.amount_spent, COUNT(b.id) as work_order_count, COALESCE(SUM(CAST(b.estimated_price AS REAL)), 0) as total_revenue, COALESCE(SUM(CASE WHEN b.status = 'completed' THEN CAST(b.estimated_price AS REAL) ELSE 0 END), 0) as completed_revenue FROM campaigns c LEFT JOIN bookings b ON b.campaign_id = c.id GROUP BY c.id ORDER BY c.created_at DESC`).all();
+    return json(results.map(r => ({ ...camelRow(r), roi: parseFloat(r.amount_spent || "0") > 0 ? (((r.completed_revenue - parseFloat(r.amount_spent || "0")) / parseFloat(r.amount_spent || "0")) * 100).toFixed(1) : "0.0" })));
+  }},
 
   // ── Checklist ──
   { method: "GET", path: "/checklist", handler: async ({ db }) => {
