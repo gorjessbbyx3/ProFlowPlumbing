@@ -192,37 +192,34 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="space-y-6 pb-12">
+    <div className="space-y-4 md:space-y-6 pb-8 md:pb-12">
       {/* ── Greeting + Live Pulse ── */}
       <div className="animate-fade-in">
-        <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-4 mb-5">
+        <div className="flex flex-col gap-3 mb-4">
           <div>
-            <div className="flex items-center gap-2 text-muted-foreground text-xs font-semibold uppercase tracking-widest mb-2">
-              <CalendarDays className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 text-muted-foreground text-[10px] font-semibold uppercase tracking-widest mb-1.5">
+              <CalendarDays className="w-3 h-3" />
               {todayFormatted}
             </div>
-            <h1 className="text-3xl md:text-4xl font-display font-extrabold text-foreground tracking-tight leading-none">
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-display font-extrabold text-foreground tracking-tight leading-none">
               {greeting.text}
             </h1>
-            <p className="text-muted-foreground font-medium mt-1.5 text-sm">
-              {greeting.subtext}
-            </p>
           </div>
 
-          {/* Live pulse indicators */}
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-foreground text-background text-xs font-bold">
-              <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" /></span>
+          {/* Live pulse indicators — wrap on mobile */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-foreground text-background text-[11px] font-bold">
+              <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-400" /></span>
               {stats?.todayBookings || 0} jobs today
             </div>
             {(stats?.pendingInvoices || 0) > 0 && (
-              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-amber-500/10 text-amber-600 text-xs font-bold border border-amber-500/15">
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-amber-500/10 text-amber-600 text-[11px] font-bold border border-amber-500/15">
                 <FileText className="w-3 h-3" />
                 {stats?.pendingInvoices} unpaid
               </div>
             )}
             {(stats?.pendingTodos || 0) > 0 && (
-              <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary/5 text-primary text-xs font-bold border border-primary/10">
+              <div className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary/5 text-primary text-[11px] font-bold border border-primary/10">
                 <CheckSquare className="w-3 h-3" />
                 {stats?.pendingTodos} tasks
               </div>
@@ -231,29 +228,29 @@ export default function Dashboard() {
         </div>
 
         {/* ── Quick Actions — horizontal scroll pills ── */}
-        <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+        <div className="flex gap-1.5 overflow-x-auto pb-2 -mx-4 px-4 md:-mx-1 md:px-1 scrollbar-none">
           {quickActions.map((action) => (
             <button
               key={action.label}
               onClick={() => navigate(action.href)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/70 backdrop-blur-sm border border-border/50 hover:border-primary/20 hover:bg-primary/5 transition-all duration-200 group whitespace-nowrap shrink-0"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/70 backdrop-blur-sm border border-border/50 hover:border-primary/20 hover:bg-primary/5 transition-all duration-200 group whitespace-nowrap shrink-0"
             >
-              <div className={cn("p-1.5 rounded-lg bg-gradient-to-br", action.gradient)}>
+              <div className={cn("p-1 rounded-md bg-gradient-to-br", action.gradient)}>
                 <action.icon className="w-3 h-3 text-white" />
               </div>
-              <span className="text-xs font-semibold text-foreground/70 group-hover:text-foreground transition-colors">{action.label}</span>
+              <span className="text-[11px] font-semibold text-foreground/70 group-hover:text-foreground transition-colors">{action.label}</span>
             </button>
           ))}
         </div>
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 md:gap-3">
         {statCards.map((stat, i) => (
           <div
             key={stat.title}
             className={cn(
-              "glass-card card-hover p-5 flex flex-col gap-3 cursor-pointer animate-fade-in-scale rounded-xl",
+              "glass-card card-hover p-3.5 md:p-5 flex flex-col gap-2 md:gap-3 cursor-pointer animate-fade-in-scale rounded-xl",
               `stagger-${i + 1}`
             )}
             onClick={() => {
@@ -263,39 +260,35 @@ export default function Dashboard() {
               if (stat.title === "Team") navigate("/employees");
             }}
           >
-            <div className="flex items-center justify-between">
-              <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-md", stat.gradient)}>
-                <stat.icon className="w-5 h-5 text-white" />
-              </div>
-              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+            <div className={cn("p-2 md:p-2.5 rounded-lg md:rounded-xl bg-gradient-to-br shadow-md w-fit", stat.gradient)}>
+              <stat.icon className="w-4 h-4 md:w-5 md:h-5 text-white" />
             </div>
             <div>
-              <h3 className="text-2xl md:text-3xl font-black text-foreground animate-count-up">{stat.value}</h3>
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{stat.title}</p>
+              <h3 className="text-xl md:text-2xl lg:text-3xl font-black text-foreground animate-count-up">{stat.value}</h3>
+              <p className="text-[10px] md:text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{stat.title}</p>
             </div>
-            <p className={cn("text-xs font-medium", stat.textColor)}>{stat.trend}</p>
           </div>
         ))}
       </div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-4 md:gap-6">
         {/* Left Column: Schedule + Tasks */}
-        <div className="xl:col-span-5 space-y-6">
+        <div className="xl:col-span-5 space-y-4 md:space-y-6">
           {/* Today's Schedule */}
           <div className="glass-card rounded-2xl animate-fade-in-scale stagger-5">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-4 pt-4 pb-2.5 md:px-5 md:pt-5 md:pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-blue-500/10">
                   <Clock className="w-4 h-4 text-blue-600" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Today's Dispatch</h2>
+                <h2 className="font-display font-bold text-base md:text-lg">Today's Dispatch</h2>
               </div>
               <button onClick={() => navigate("/scheduling")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 View all <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="px-5 pb-5">
+            <div className="px-4 pb-4 md:px-5 md:pb-5">
               {todaysShifts.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground/60">
                   <Waves className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
@@ -328,12 +321,12 @@ export default function Dashboard() {
 
           {/* Pending Tasks */}
           <div className="glass-card rounded-2xl animate-fade-in-scale stagger-6">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-4 pt-4 pb-2.5 md:px-5 md:pt-5 md:pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-500/10">
                   <CheckSquare className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Pending Tasks</h2>
+                <h2 className="font-display font-bold text-base md:text-lg">Pending Tasks</h2>
                 {urgentTodos.length > 0 && (
                   <span className="text-xs font-bold text-white bg-rose-500 rounded-full w-5 h-5 flex items-center justify-center">{stats?.pendingTodos || 0}</span>
                 )}
@@ -342,7 +335,7 @@ export default function Dashboard() {
                 View all <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="px-5 pb-5">
+            <div className="px-4 pb-4 md:px-5 md:pb-5">
               {urgentTodos.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground/60">
                   <Sparkles className="w-8 h-8 mx-auto mb-2 text-emerald-200" />
@@ -375,18 +368,18 @@ export default function Dashboard() {
 
           {/* Follow-ups Due */}
           <div className="glass-card rounded-2xl animate-fade-in-scale stagger-7">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-4 pt-4 pb-2.5 md:px-5 md:pt-5 md:pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-violet-500/10">
                   <PhoneCall className="w-4 h-4 text-violet-600" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Follow-ups Due</h2>
+                <h2 className="font-display font-bold text-base md:text-lg">Follow-ups Due</h2>
               </div>
               <button onClick={() => navigate("/followups")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 View all <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="px-5 pb-5">
+            <div className="px-4 pb-4 md:px-5 md:pb-5">
               {pendingFollowups.length === 0 ? (
                 <div className="text-center py-6 text-muted-foreground/60">
                   <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-200" />
@@ -410,21 +403,21 @@ export default function Dashboard() {
         </div>
 
         {/* Center Column: Recent Bookings + Financials */}
-        <div className="xl:col-span-4 space-y-6">
+        <div className="xl:col-span-4 space-y-4 md:space-y-6">
           {/* Recent Bookings */}
           <div className="glass-card rounded-2xl animate-fade-in-scale stagger-5">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-4 pt-4 pb-2.5 md:px-5 md:pt-5 md:pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-primary/10">
                   <Briefcase className="w-4 h-4 text-primary" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Recent Work Orders</h2>
+                <h2 className="font-display font-bold text-base md:text-lg">Recent Work Orders</h2>
               </div>
               <button onClick={() => navigate("/bookings")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 View all <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="px-5 pb-5 space-y-3">
+            <div className="px-4 pb-4 md:px-5 md:pb-5 space-y-3">
               {!stats?.recentBookings?.length ? (
                 <div className="text-center py-8 text-muted-foreground/60">
                   <CalendarDays className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
@@ -435,7 +428,7 @@ export default function Dashboard() {
                 </div>
               ) : (
                 stats.recentBookings.map((booking) => (
-                  <div key={booking.id} className="group p-4 rounded-2xl bg-background/60 hover:bg-white/80 hover:shadow-lg border border-white/40 hover:border-primary/10 transition-all duration-300">
+                  <div key={booking.id} className="group p-3 md:p-4 rounded-xl md:rounded-2xl bg-background/60 hover:bg-white/80 hover:shadow-lg border border-white/40 hover:border-primary/10 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
                       <div className="min-w-0 flex-1">
                         <h4 className="font-bold text-foreground truncate">{booking.clientName || "Walk-in Customer"}</h4>
@@ -475,21 +468,21 @@ export default function Dashboard() {
 
           {/* Enhanced Financial Dashboard */}
           <div className="glass-card rounded-2xl animate-fade-in-scale stagger-6">
-            <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+            <div className="px-4 pt-4 pb-2.5 md:px-5 md:pt-5 md:pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-emerald-500/10">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
                 </div>
-                <h2 className="font-display font-bold text-lg">Financial Dashboard</h2>
+                <h2 className="font-display font-bold text-base md:text-lg">Financial Dashboard</h2>
               </div>
               <button onClick={() => navigate("/reports")} className="text-xs font-bold text-primary hover:text-primary/80 transition-colors flex items-center gap-1">
                 Reports <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-            <div className="px-5 pb-5 space-y-4">
+            <div className="px-4 pb-4 md:px-5 md:pb-5 space-y-4">
               {/* P&L Cards */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-100">
+                <div className="p-3 md:p-3.5 rounded-xl md:rounded-2xl bg-emerald-500/10 border border-emerald-100">
                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">This Month Revenue</p>
                   <p className="text-xl font-black text-emerald-700 mt-0.5">{formatCurrency(financial?.thisMonth?.revenue || stats?.totalRevenue || "0")}</p>
                   {financial?.revenueGrowth && parseFloat(financial.revenueGrowth) !== 0 && (
@@ -498,7 +491,7 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-                <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10">
+                <div className="p-3 md:p-3.5 rounded-xl md:rounded-2xl bg-rose-500/5 border border-rose-500/10">
                   <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Expenses + Labor</p>
                   <p className="text-xl font-black text-rose-700 mt-0.5">{formatCurrency(parseFloat(financial?.thisMonth?.expenses || "0") + parseFloat(financial?.thisMonth?.labor || "0"))}</p>
                 </div>
@@ -506,14 +499,14 @@ export default function Dashboard() {
 
               {/* Profit + MRR */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-primary/5 to-cyan-500/5 border border-primary/10">
+                <div className="p-3 md:p-3.5 rounded-xl md:rounded-2xl bg-gradient-to-r from-primary/5 to-cyan-500/5 border border-primary/10">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Net Profit</p>
                     <TrendingUp className="w-3.5 h-3.5 text-primary" />
                   </div>
                   <p className="text-xl font-black text-primary mt-0.5">{formatCurrency(financial?.thisMonth?.profit || (parseFloat(stats?.totalRevenue || "0") - recentExpenseTotal))}</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-purple-500/5 border border-purple-500/10">
+                <div className="p-3 md:p-3.5 rounded-xl md:rounded-2xl bg-purple-500/5 border border-purple-500/10">
                   <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Recurring MRR</p>
                   <p className="text-xl font-black text-purple-700 mt-0.5">{formatCurrency(financial?.mrr || "0")}</p>
                   {financial?.activeSubscriptions > 0 && <p className="text-[10px] text-purple-500 font-medium mt-0.5">{financial.activeSubscriptions} active subscriptions</p>}
@@ -577,13 +570,13 @@ export default function Dashboard() {
         </div>
 
         {/* Right Column: Business Checklist */}
-        <div className="xl:col-span-3 space-y-6">
+        <div className="xl:col-span-3 space-y-4 md:space-y-6">
           <div className="glass-card rounded-2xl animate-fade-in-scale stagger-7">
-            <div className="px-5 pt-5 pb-4">
+            <div className="px-4 pt-4 pb-3 md:px-5 md:pt-5 md:pb-4">
               <div className="flex items-center gap-3 mb-4">
                 <ProgressRing percent={checklistProgress} />
                 <div>
-                  <h2 className="font-display font-bold text-lg leading-tight">Startup Checklist</h2>
+                  <h2 className="font-display font-bold text-base md:text-lg leading-tight">Startup Checklist</h2>
                   <p className="text-xs text-muted-foreground font-medium mt-0.5">
                     {checklist?.filter((i) => i.completed).length || 0} of {checklist?.length || 0} complete
                   </p>

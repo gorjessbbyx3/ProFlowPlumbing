@@ -205,7 +205,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         {/* Ambient glow */}
         <div className="absolute top-0 left-0 right-0 h-72 bg-gradient-to-b from-primary/[0.03] to-transparent -z-10 pointer-events-none" />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 z-0 relative custom-scrollbar">
+        <main className="flex-1 overflow-y-auto p-3 md:p-6 lg:p-8 z-0 relative custom-scrollbar">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
@@ -216,10 +216,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export const PageHeader = ({ title, subtitle, description, action }: { title: string, subtitle?: string, description?: string, action?: React.ReactNode }) => (
-  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8 animate-fade-in">
+  <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3 mb-5 md:mb-8 animate-fade-in">
     <div>
-      <h1 className="text-2xl md:text-3xl font-extrabold text-foreground tracking-tight">{title}</h1>
-      {(subtitle || description) && <p className="mt-1.5 text-muted-foreground font-medium">{subtitle || description}</p>}
+      <h1 className="text-xl md:text-2xl lg:text-3xl font-extrabold text-foreground tracking-tight">{title}</h1>
+      {(subtitle || description) && <p className="mt-1 text-muted-foreground font-medium text-sm">{subtitle || description}</p>}
     </div>
     {action && <div className="shrink-0">{action}</div>}
   </div>
