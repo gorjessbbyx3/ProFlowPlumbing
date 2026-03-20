@@ -77,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="flex items-center justify-between w-full px-5 pb-1">
               <div className="flex items-center gap-2.5">
                 <img src={logo} alt="Logo" className="h-8 w-auto max-w-[100px] object-contain rounded-lg" />
-                <span className="font-display font-bold text-primary text-base">ProFlow Plumbing</span>
+                <span className="font-display font-bold text-primary text-base">Plumbing CRM</span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -124,7 +124,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <div className="px-5 py-3 border-t border-slate-100 flex items-center gap-3 bg-slate-50/80 shrink-0">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">P</div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-700 truncate">admin@proflowplumbing.com</p>
+              <p className="text-xs font-bold text-slate-700 truncate">admin@plumbingcrm.app</p>
               <p className="text-[10px] text-slate-400">808-555-0100</p>
             </div>
           </div>
@@ -135,9 +135,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <aside className="hidden lg:flex fixed inset-y-0 left-0 z-50 w-72 bg-white border-r border-slate-200 flex-col lg:static">
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <img src={logo} alt="ProFlow Plumbing" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
+            <img src={logo} alt="Plumbing CRM" className="h-12 w-auto max-w-[160px] object-contain rounded-lg shadow-sm" />
             <div>
-              <h1 className="font-display font-bold text-primary leading-tight text-lg">ProFlow Plumbing</h1>
+              <h1 className="font-display font-bold text-primary leading-tight text-lg">Plumbing CRM</h1>
               <p className="text-xs font-semibold tracking-wider text-slate-400 uppercase">Dashboard</p>
             </div>
           </div>
@@ -167,7 +167,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="p-4 border-t border-slate-100 m-3 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10">
           <p className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Admin Panel</p>
-          <p className="text-sm text-slate-600 font-medium truncate">admin@proflowplumbing.com</p>
+          <p className="text-sm text-slate-600 font-medium truncate">admin@plumbingcrm.app</p>
           <p className="text-xs text-slate-500 mt-0.5">808-555-0100</p>
         </div>
       </aside>
@@ -178,7 +178,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <header className="lg:hidden bg-white border-b border-slate-200 h-14 flex items-center px-4 justify-between sticky top-0 z-30">
           <div className="flex items-center gap-2.5">
             <img src={logo} alt="Logo" className="h-7 w-auto max-w-[100px] object-contain rounded" />
-            <span className="font-display font-bold text-primary text-sm">ProFlow Plumbing</span>
+            <span className="font-display font-bold text-primary text-sm">Plumbing CRM</span>
           </div>
           <div className="flex items-center gap-1">
             <NotificationBell />

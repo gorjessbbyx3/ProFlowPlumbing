@@ -1,4 +1,4 @@
-// ProFlow Plumbing — Full API Worker on Cloudflare D1
+// Plumbing CRM — Full API Worker on Cloudflare D1
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
@@ -43,7 +43,7 @@ export default {
           const statusColor = inv.status === "paid" ? "#22c55e" : inv.status === "overdue" ? "#ef4444" : "#f59e0b";
           const statusLabel = inv.status.charAt(0).toUpperCase() + inv.status.slice(1);
           const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Invoice ${inv.invoice_number} — ProFlow Plumbing</title>
+<title>Invoice ${inv.invoice_number} — Plumbing CRM</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,system-ui,sans-serif;background:#f1f5f9;padding:20px;color:#1e293b}
 .card{max-width:600px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 .header{background:#003087;color:#fff;padding:28px 24px;text-align:center}
@@ -57,7 +57,7 @@ export default {
 .pay-btn{display:block;width:100%;padding:16px;background:#003087;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;text-align:center}
 .pay-btn:hover{opacity:.9}</style></head><body>
 <div class="card">
-<div class="header"><h1>ProFlow Plumbing</h1><p>Professional Plumbing Services</p><span class="badge">${statusLabel}</span></div>
+<div class="header"><h1>Plumbing CRM</h1><p>Professional Plumbing Services</p><span class="badge">${statusLabel}</span></div>
 <div class="body">
 <div class="row"><span class="label">Invoice</span><span class="value">${inv.invoice_number}</span></div>
 ${inv.client_name ? `<div class="row"><span class="label">Client</span><span class="value">${inv.client_name}</span></div>` : ""}
@@ -68,7 +68,7 @@ ${inv.due_date ? `<div class="row"><span class="label">Due Date</span><span clas
 <div class="total-row"><span class="label">Total Due</span><span class="value">$${parseFloat(inv.total).toFixed(2)}</span></div>
 </div>
 <div style="padding:0 24px 24px"><p style="text-align:center;font-size:13px;color:#64748b;margin-top:16px">Payment accepted via Cash, Zelle, Venmo, or Card</p></div>
-<div class="footer">ProFlow Plumbing · info@proflowplumbing.com</div>
+<div class="footer">Plumbing CRM · info@plumbingcrm.app</div>
 </div></body></html>`;
           return new Response(html, { status: 200, headers: { "Content-Type": "text/html;charset=UTF-8", ...CORS } });
         }

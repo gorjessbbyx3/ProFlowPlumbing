@@ -56,7 +56,7 @@ export default function Reports() {
       {/* Printable Area Starts Here */}
       <div className="print:block">
         <div className="hidden print:block mb-8 text-center border-b pb-6">
-          <h1 className="text-3xl font-bold font-display text-slate-900">ProFlow Plumbing</h1>
+          <h1 className="text-3xl font-bold font-display text-slate-900">Plumbing CRM</h1>
           <p className="text-lg text-slate-600 mt-2">Financial Summary Report</p>
           <p className="text-slate-500">{format(new Date(dateRange.startDate), 'MMM d, yyyy')} — {format(new Date(dateRange.endDate), 'MMM d, yyyy')}</p>
         </div>
