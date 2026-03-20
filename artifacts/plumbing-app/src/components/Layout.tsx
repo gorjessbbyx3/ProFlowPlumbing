@@ -120,14 +120,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
             ))}
           </div>
 
-          {/* Compact footer */}
-          <div className="px-5 py-3 border-t border-slate-100 flex items-center gap-3 bg-slate-50/80 shrink-0">
-            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-sm shrink-0">P</div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-slate-700 truncate">admin@plumbingcrm.app</p>
-              <p className="text-[10px] text-slate-400">808-555-0100</p>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -165,11 +157,6 @@ export function Layout({ children }: { children: React.ReactNode }) {
           })}
         </nav>
 
-        <div className="p-4 border-t border-slate-100 m-3 rounded-2xl bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/10">
-          <p className="text-xs font-bold text-primary mb-1 uppercase tracking-wider">Admin Panel</p>
-          <p className="text-sm text-slate-600 font-medium truncate">admin@plumbingcrm.app</p>
-          <p className="text-xs text-slate-500 mt-0.5">808-555-0100</p>
-        </div>
       </aside>
 
       {/* Main Content */}
