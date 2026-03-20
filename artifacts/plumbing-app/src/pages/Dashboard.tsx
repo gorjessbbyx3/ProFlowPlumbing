@@ -195,13 +195,13 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 pb-12">
       {/* Hero Section */}
-      <div className="relative rounded-3xl overflow-hidden animate-fade-in-scale">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#003087] via-[#00408f] to-[#002060]" />
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-72 h-72 bg-cyan-400/20 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
+      <div className="relative rounded-2xl overflow-hidden animate-fade-in-scale">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#312e81] via-[#4338ca] to-[#3730a3]" />
+        <div className="absolute inset-0">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-accent/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl" />
+          <div className="absolute bottom-0 left-0 w-72 h-72 bg-primary/20 rounded-full translate-y-1/2 -translate-x-1/4 blur-3xl" />
         </div>
-        <div className="relative z-10 px-8 py-8 md:px-10 md:py-10">
+        <div className="relative z-10 px-6 py-7 md:px-8 md:py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="space-y-3">
               <div className="flex items-center gap-2 text-white/60 text-sm font-medium">
@@ -221,7 +221,6 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-4">
-              <img src={logo} alt="Plumbing CRM" className="h-16 w-auto rounded-xl shadow-2xl hidden md:block" />
             </div>
           </div>
 
@@ -244,12 +243,12 @@ export default function Dashboard() {
       </div>
 
       {/* Stats Row */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {statCards.map((stat, i) => (
-          <Card
+          <div
             key={stat.title}
             className={cn(
-              "p-5 flex flex-col gap-3 hover:-translate-y-1 transition-all duration-300 cursor-pointer animate-fade-in-scale group",
+              "glass-card card-hover p-5 flex flex-col gap-3 cursor-pointer animate-fade-in-scale rounded-xl",
               `stagger-${i + 1}`
             )}
             onClick={() => {
@@ -263,14 +262,14 @@ export default function Dashboard() {
               <div className={cn("p-2.5 rounded-xl bg-gradient-to-br shadow-md", stat.gradient)}>
                 <stat.icon className="w-5 h-5 text-white" />
               </div>
-              <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+              <ChevronRight className="w-4 h-4 text-muted-foreground/30 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
             </div>
             <div>
-              <h3 className="text-2xl md:text-3xl font-black text-slate-900 animate-count-up">{stat.value}</h3>
-              <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mt-0.5">{stat.title}</p>
+              <h3 className="text-2xl md:text-3xl font-black text-foreground animate-count-up">{stat.value}</h3>
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">{stat.title}</p>
             </div>
             <p className={cn("text-xs font-medium", stat.textColor)}>{stat.trend}</p>
-          </Card>
+          </div>
         ))}
       </div>
 

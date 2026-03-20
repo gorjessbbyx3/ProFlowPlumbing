@@ -46,15 +46,15 @@ export default {
 <title>Invoice ${inv.invoice_number} — Plumbing CRM</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,system-ui,sans-serif;background:#f1f5f9;padding:20px;color:#1e293b}
 .card{max-width:600px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
-.header{background:#003087;color:#fff;padding:28px 24px;text-align:center}
+.header{background:#4338ca;color:#fff;padding:28px 24px;text-align:center}
 .header h1{font-size:22px;font-weight:800;letter-spacing:-.5px}.header p{opacity:.8;margin-top:4px;font-size:13px}
 .badge{display:inline-block;padding:6px 16px;border-radius:99px;font-weight:700;font-size:12px;margin-top:12px;color:#fff;background:${statusColor}}
 .body{padding:24px}.row{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid #f1f5f9;font-size:14px}
 .row:last-child{border:none}.label{color:#64748b;font-weight:500}.value{font-weight:700;text-align:right}
-.total-row{background:#f8fafc;margin:16px -24px -24px;padding:20px 24px;border-top:2px solid #003087;display:flex;justify-content:space-between;align-items:center}
-.total-row .label{font-size:18px;font-weight:800;color:#003087}.total-row .value{font-size:24px;font-weight:900;color:#003087}
+.total-row{background:#f8fafc;margin:16px -24px -24px;padding:20px 24px;border-top:2px solid #4338ca;display:flex;justify-content:space-between;align-items:center}
+.total-row .label{font-size:18px;font-weight:800;color:#4338ca}.total-row .value{font-size:24px;font-weight:900;color:#4338ca}
 .footer{text-align:center;padding:16px;font-size:12px;color:#94a3b8}
-.pay-btn{display:block;width:100%;padding:16px;background:#003087;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;text-align:center}
+.pay-btn{display:block;width:100%;padding:16px;background:#4338ca;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;text-align:center}
 .pay-btn:hover{opacity:.9}</style></head><body>
 <div class="card">
 <div class="header"><h1>Plumbing CRM</h1><p>Professional Plumbing Services</p><span class="badge">${statusLabel}</span></div>
@@ -611,7 +611,7 @@ const routes = [
       const seed = [
         ["Business Registration & Licensing","Register business entity (LLC or Sole Proprietorship)",1],["Business Registration & Licensing","Obtain state business license",2],["Business Registration & Licensing","Get Hawaii General Excise Tax (GET) license",3],["Business Registration & Licensing","Obtain Federal EIN",4],["Business Registration & Licensing","Register DBA if needed",5],
         ["Insurance","Get general liability insurance",6],["Insurance","Obtain surety bond",7],["Insurance","Set up workers compensation insurance",8],["Insurance","Get commercial auto insurance",9],["Insurance","Consider professional liability insurance",10],
-        ["Equipment & Supplies","Purchase commercial-grade cleaning products",11],["Equipment & Supplies","Buy commercial vacuum cleaner",12],["Equipment & Supplies","Purchase pressure washer",13],["Equipment & Supplies","Stock microfiber cloths and towels",14],["Equipment & Supplies","Buy mop, buckets, and squeegees",15],["Equipment & Supplies","Get extension poles",16],["Equipment & Supplies","Purchase safety gear",17],["Equipment & Supplies","Buy caddy/organizer",18],["Equipment & Supplies","Stock trash bags and disposable supplies",19],["Equipment & Supplies","Purchase specialty boat/marine cleaning products",20],["Equipment & Supplies","Get auto detailing supplies",21],
+        ["Equipment & Tools","Purchase pipe wrenches (14\", 18\", 24\")",11],["Equipment & Tools","Buy pipe cutter and threading kit",12],["Equipment & Tools","Purchase drain cleaning machine / snake",13],["Equipment & Tools","Stock PEX, copper, and PVC fittings inventory",14],["Equipment & Tools","Buy soldering and brazing equipment",15],["Equipment & Tools","Get press tool for PEX connections",16],["Equipment & Tools","Purchase safety gear (goggles, gloves, knee pads)",17],["Equipment & Tools","Buy inspection camera / borescope",18],["Equipment & Tools","Stock Teflon tape, pipe dope, and sealants",19],["Equipment & Tools","Purchase hydro jetting equipment",20],["Equipment & Tools","Get water pressure test gauge kit",21],
         ["Vehicle & Transportation","Acquire work vehicle",22],["Vehicle & Transportation","Get vehicle signage/wrap",23],["Vehicle & Transportation","Set up fuel budget and tracking",24],["Vehicle & Transportation","Install vehicle storage system",25],
         ["Financial Setup","Open dedicated business bank account",26],["Financial Setup","Set up bookkeeping/accounting system",27],["Financial Setup","Create pricing structure",28],["Financial Setup","Set up payment methods",29],["Financial Setup","Create invoice templates",30],["Financial Setup","Set up expense tracking",31],["Financial Setup","Plan for quarterly GET tax payments",32],
         ["Marketing & Branding","Design and print business cards",33],["Marketing & Branding","Create professional logo",34],["Marketing & Branding","Build company website",35],["Marketing & Branding","Set up Facebook business page",36],["Marketing & Branding","Create Instagram business profile",37],["Marketing & Branding","Set up Google Business Profile",38],["Marketing & Branding","Create Yelp business listing",39],["Marketing & Branding","Order branded uniforms/shirts",40],["Marketing & Branding","Create flyers and door hangers",41],["Marketing & Branding","Set up a referral program",42],["Marketing & Branding","Join local business directories",43],
@@ -992,28 +992,28 @@ const routes = [
     const cnt = await db.prepare("SELECT COUNT(*) as c FROM service_pricing").first();
     if (cnt.c === 0) {
       const seed = [
-        ["Car Detailing","Basic Wash & Dry","Exterior wash, dry, tire shine","35.00","per vehicle","30 min",1],
-        ["Car Detailing","Full Interior Clean","Vacuum, wipe down, windows, air freshener","75.00","per vehicle","1 hr",2],
-        ["Car Detailing","Complete Detail Package","Full exterior/interior detail, wax, leather condition","175.00","per vehicle","2-3 hrs",3],
-        ["Car Detailing","Engine Bay Clean","Degrease and detail engine compartment","65.00","per vehicle","45 min",4],
-        ["Car Detailing","Ceramic Coating","Paint protection ceramic coat application","350.00","per vehicle","4-5 hrs",5],
-        ["Boat Cleaning","Deck Wash & Rinse","Pressure wash deck, hull rinse","125.00","per boat","1 hr",6],
-        ["Boat Cleaning","Full Boat Detail","Hull, deck, cabin, windows, wax","350.00","per boat","3-4 hrs",7],
-        ["Boat Cleaning","Bottom Paint & Barnacle","Hull scrape, bottom paint touch-up","450.00","per boat","4-5 hrs",8],
-        ["Boat Cleaning","Cabin Deep Clean","Interior cabin detail, upholstery, galley","200.00","per boat","2 hrs",9],
-        ["Condo/Home","Standard Cleaning","Vacuum, mop, dust, bathrooms, kitchen","150.00","per unit","2 hrs",10],
-        ["Condo/Home","Deep Clean","Baseboards, inside appliances, windows, grout","250.00","per unit","3-4 hrs",11],
-        ["Condo/Home","Move-In/Move-Out","Full property clean for turnovers","350.00","per unit","4-6 hrs",12],
-        ["Condo/Home","Vacation Rental Turnover","Quick turnover clean between guests","125.00","per unit","1.5 hrs",13],
-        ["Condo/Home","Lanai & Outdoor","Power wash lanai, clean outdoor furniture","85.00","per unit","1 hr",14],
-        ["Add-Ons","Window Cleaning (interior)","All windows + tracks + sills","45.00","per visit","30 min",15],
-        ["Add-Ons","Refrigerator Deep Clean","Empty, clean, sanitize fridge","35.00","per unit","30 min",16],
-        ["Add-Ons","Oven Deep Clean","Full oven + range detail","40.00","per unit","30 min",17],
-        ["Add-Ons","Laundry Service","Wash, dry, fold 1 load","25.00","per load","1 hr",18],
-        ["Add-Ons","Carpet Shampooing","Hot water extraction per room","65.00","per room","45 min",19],
-        ["Commercial","Office Cleaning","Desks, floors, restrooms, kitchen","200.00","per visit","2 hrs",20],
-        ["Commercial","Lobby & Common Area","High-traffic area detail","175.00","per visit","1.5 hrs",21],
-        ["Commercial","Post-Construction","Dust, debris, window, floor cleanup","500.00","per job","4-8 hrs",22],
+        ["Drain Services","Drain Cleaning (Snake)","Clear clogged drains using mechanical snake","150.00","per drain","30-60 min",1],
+        ["Drain Services","Hydro Jetting","High-pressure water jetting for severe clogs","450.00","per job","1-2 hrs",2],
+        ["Drain Services","Camera Inspection","Video camera drain/sewer line inspection","250.00","per inspection","30-45 min",3],
+        ["Drain Services","Floor Drain Service","Clean and service floor drains","125.00","per drain","30 min",4],
+        ["Pipe Repair","Pipe Leak Repair","Locate and repair leaking pipe section","200.00","per repair","1-2 hrs",5],
+        ["Pipe Repair","Pipe Replacement (per ft)","Replace damaged pipe section","35.00","per foot","varies",6],
+        ["Pipe Repair","Repiping (Whole Home)","Full home copper or PEX repipe","4500.00","per home","2-4 days",7],
+        ["Pipe Repair","Frozen Pipe Thaw & Repair","Thaw frozen pipe and repair if burst","300.00","per job","1-2 hrs",8],
+        ["Water Heater","Water Heater Flush","Drain and flush sediment from tank","150.00","per unit","45 min",9],
+        ["Water Heater","Water Heater Install (Tank)","Remove old and install new tank water heater","1200.00","per unit","3-4 hrs",10],
+        ["Water Heater","Water Heater Install (Tankless)","Install tankless on-demand water heater","2500.00","per unit","4-6 hrs",11],
+        ["Water Heater","Anode Rod Replacement","Replace sacrificial anode rod","175.00","per unit","30 min",12],
+        ["Fixtures","Faucet Install/Replace","Install or replace kitchen or bath faucet","185.00","per fixture","1 hr",13],
+        ["Fixtures","Toilet Install/Replace","Remove old and install new toilet","275.00","per fixture","1-2 hrs",14],
+        ["Fixtures","Garbage Disposal Install","Install or replace garbage disposal","250.00","per unit","1 hr",15],
+        ["Fixtures","Shower Valve Replacement","Replace shower mixing valve","350.00","per fixture","2 hrs",16],
+        ["Emergency","Emergency Call-Out","After-hours emergency plumbing response","350.00","per visit","varies",17],
+        ["Emergency","Burst Pipe Emergency","Emergency shutoff, repair, and cleanup","500.00","per job","2-4 hrs",18],
+        ["Emergency","Sewer Backup Emergency","Emergency sewer line clearing","450.00","per job","1-3 hrs",19],
+        ["Commercial","Commercial Plumbing Service","General commercial plumbing maintenance","250.00","per hour","varies",20],
+        ["Commercial","Grease Trap Service","Clean and service commercial grease trap","400.00","per unit","1-2 hrs",21],
+        ["Commercial","Backflow Prevention Test","Annual backflow preventer testing & cert","175.00","per device","30 min",22],
       ];
       const stmt = db.prepare("INSERT INTO service_pricing (category, name, description, base_price, unit, duration_estimate, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?)");
       await db.batch(seed.map(s => stmt.bind(s[0], s[1], s[2], s[3], s[4], s[5], s[6])));
@@ -1045,12 +1045,11 @@ const routes = [
     const cnt = await db.prepare("SELECT COUNT(*) as c FROM membership_plans").first();
     if (cnt.c === 0) {
       const plans = [
-        ["Ohana Basic","basic","monthly","299.00","Perfect for regular home maintenance",JSON.stringify(["1 standard condo clean per week","Basic supplies included","Same-day booking","Text/call scheduling"]),"0",1],
-        ["Ohana Plus","standard","monthly","549.00","Our most popular — homes + vehicles",JSON.stringify(["1 standard condo clean per week","1 full car detail per month","Priority scheduling","All supplies included","10% off add-on services"]),"10",2],
-        ["Ohana Premium","premium","monthly","899.00","The complete package — home, car & boat",JSON.stringify(["1 deep clean per week","2 full car details per month","1 boat deck wash per month","VIP priority scheduling","All supplies included","15% off all add-ons","Free window cleaning monthly","Dedicated crew assigned"]),"15",3],
-        ["Boat Club","standard","monthly","399.00","Keep your vessel pristine",JSON.stringify(["2 deck washes per month","1 cabin clean per month","Hull inspection","Marine-grade products","Harbor pickup/drop-off"]),"5",4],
-        ["Fleet Plan","premium","monthly","199.00","Per-vehicle fleet pricing",JSON.stringify(["Weekly exterior wash per vehicle","Monthly full detail per vehicle","Fleet dashboard & reports","Volume discount pricing","On-site service available"]),"20",5],
-        ["Vacation Rental Pro","standard","monthly","449.00","For Airbnb/VRBO hosts",JSON.stringify(["Unlimited turnover cleans (up to 8/mo)","Same-day turnover capability","Linen change service","Restocking toiletries check","Photo-ready quality guarantee","Guest review boost program"]),"0",6],
+        ["Homeowner Basic","basic","yearly","149.00","Annual plumbing inspection & peace of mind",JSON.stringify(["1 annual plumbing inspection","Water heater flush included","Check all fixtures for leaks","Water pressure test","10% off any repairs found","Priority scheduling"]),"10",1],
+        ["Homeowner Plus","standard","yearly","299.00","Complete home plumbing care plan",JSON.stringify(["2 plumbing inspections per year","Water heater flush & anode check","Drain cleaning (up to 2 drains)","All fixture leak checks","15% off all repairs","Priority emergency response","Camera inspection included"]),"15",2],
+        ["Homeowner Premium","premium","monthly","49.00","Full coverage monthly maintenance",JSON.stringify(["Monthly plumbing check-up","Unlimited drain clearing","Water heater maintenance included","All fixture repairs covered (parts extra)","24/7 emergency priority","20% off all parts","Dedicated plumber assigned"]),"20",3],
+        ["Property Manager","standard","monthly","99.00","Multi-unit property maintenance",JSON.stringify(["Monthly common area plumbing check","Emergency response within 2 hours","Up to 4 drain clearings per month","Quarterly water heater service","Tenant work order portal","15% off all repairs","Detailed maintenance reports"]),"15",4],
+        ["Commercial Basic","standard","monthly","199.00","Business plumbing maintenance",JSON.stringify(["Monthly plumbing inspection","Grease trap service (quarterly)","Backflow testing (annual)","Emergency response within 1 hour","All fixture maintenance","Compliance documentation","20% off emergency calls"]),"20",5],
       ];
       const stmt = db.prepare("INSERT INTO membership_plans (name, tier, frequency, price, description, features, discount_pct, sort_order) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
       await db.batch(plans.map(p => stmt.bind(p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7])));
