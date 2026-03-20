@@ -74,7 +74,7 @@ function ProgressRing({ percent, size = 56, stroke = 5, color = "text-primary" }
 
   return (
     <svg width={size} height={size} className="shrink-0">
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-slate-100" />
+      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="currentColor" strokeWidth={stroke} className="text-muted" />
       <circle
         cx={size / 2}
         cy={size / 2}
@@ -87,7 +87,7 @@ function ProgressRing({ percent, size = 56, stroke = 5, color = "text-primary" }
         strokeDashoffset={offset}
         className={cn("progress-ring-circle", color)}
       />
-      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" className="fill-slate-700 text-[11px] font-bold">
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" className="fill-foreground text-[11px] font-bold">
         {percent}%
       </text>
     </svg>
@@ -173,15 +173,15 @@ export default function Dashboard() {
     return (
       <div className="p-12 flex flex-col items-center justify-center gap-4">
         <div className="w-12 h-12 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-        <p className="text-slate-500 font-medium">Loading your dashboard...</p>
+        <p className="text-muted-foreground font-medium">Loading your dashboard...</p>
       </div>
     );
   }
 
   const statCards = [
-    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-50", textColor: "text-blue-600", trend: "work orders today" },
+    { title: "Today's Jobs", value: stats?.todayBookings || 0, icon: Briefcase, gradient: "from-blue-500 to-blue-600", bgLight: "bg-blue-500/10", textColor: "text-blue-600", trend: "work orders today" },
     { title: "Outstanding", value: stats?.pendingInvoices || 0, icon: FileText, gradient: "from-amber-500 to-orange-500", bgLight: "bg-amber-50", textColor: "text-amber-600", trend: "invoices unpaid" },
-    { title: "Revenue", value: formatCurrency(stats?.totalRevenue), icon: TrendingUp, gradient: "from-emerald-500 to-green-600", bgLight: "bg-emerald-50", textColor: "text-emerald-600", trend: "total earned" },
+    { title: "Revenue", value: formatCurrency(stats?.totalRevenue), icon: TrendingUp, gradient: "from-emerald-500 to-green-600", bgLight: "bg-emerald-500/10", textColor: "text-emerald-600", trend: "total earned" },
     { title: "Technicians", value: stats?.activeEmployees || 0, icon: Users, gradient: "from-purple-500 to-violet-600", bgLight: "bg-purple-50", textColor: "text-purple-600", trend: "active in field" },
   ];
 
@@ -278,10 +278,10 @@ export default function Dashboard() {
         {/* Left Column: Schedule + Tasks */}
         <div className="xl:col-span-5 space-y-6">
           {/* Today's Schedule */}
-          <Card className="animate-fade-in-scale stagger-5">
+          <div className="glass-card rounded-2xl animate-fade-in-scale stagger-5">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-blue-50">
+                <div className="p-2 rounded-xl bg-blue-500/10">
                   <Clock className="w-4 h-4 text-blue-600" />
                 </div>
                 <h2 className="font-display font-bold text-lg">Today's Dispatch</h2>
@@ -292,8 +292,8 @@ export default function Dashboard() {
             </div>
             <div className="px-5 pb-5">
               {todaysShifts.length === 0 ? (
-                <div className="text-center py-8 text-slate-400">
-                  <Waves className="w-10 h-10 mx-auto mb-2 text-slate-200" />
+                <div className="text-center py-8 text-muted-foreground/60">
+                  <Waves className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
                   <p className="text-sm font-medium">No jobs dispatched today</p>
                   <button onClick={() => navigate("/scheduling")} className="text-xs text-primary font-bold mt-2 hover:underline">
                     Dispatch a job
@@ -302,14 +302,14 @@ export default function Dashboard() {
               ) : (
                 <div className="space-y-2">
                   {todaysShifts.slice(0, 4).map((shift: Shift) => (
-                    <div key={shift.id} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl hover:bg-blue-50/50 transition-colors">
-                      <div className="w-1 h-10 rounded-full bg-blue-500 shrink-0" />
+                    <div key={shift.id} className="flex items-center gap-3 p-3 bg-background/50 rounded-xl hover:bg-blue-500/10/50 transition-colors">
+                      <div className="w-1 h-10 rounded-full bg-blue-500/100 shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <p className="font-bold text-sm text-slate-900 truncate">Employee #{shift.employeeId}</p>
-                        <p className="text-xs text-slate-500">{shift.startTime} - {shift.endTime}</p>
+                        <p className="font-bold text-sm text-foreground truncate">Employee #{shift.employeeId}</p>
+                        <p className="text-xs text-muted-foreground">{shift.startTime} - {shift.endTime}</p>
                       </div>
                       {shift.notes && (
-                        <span className="text-xs text-slate-400 truncate max-w-[80px]">{shift.notes}</span>
+                        <span className="text-xs text-muted-foreground/60 truncate max-w-[80px]">{shift.notes}</span>
                       )}
                     </div>
                   ))}
@@ -319,13 +319,13 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-          </Card>
+          </div>
 
           {/* Pending Tasks */}
-          <Card className="animate-fade-in-scale stagger-6">
+          <div className="glass-card rounded-2xl animate-fade-in-scale stagger-6">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-50">
+                <div className="p-2 rounded-xl bg-emerald-500/10">
                   <CheckSquare className="w-4 h-4 text-emerald-600" />
                 </div>
                 <h2 className="font-display font-bold text-lg">Pending Tasks</h2>
@@ -339,23 +339,23 @@ export default function Dashboard() {
             </div>
             <div className="px-5 pb-5">
               {urgentTodos.length === 0 ? (
-                <div className="text-center py-6 text-slate-400">
+                <div className="text-center py-6 text-muted-foreground/60">
                   <Sparkles className="w-8 h-8 mx-auto mb-2 text-emerald-200" />
                   <p className="text-sm font-medium">All caught up!</p>
                 </div>
               ) : (
                 <div className="space-y-1">
                   {urgentTodos.map((todo: Todo) => (
-                    <div key={todo.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors">
-                      <Circle className="w-4 h-4 text-slate-300 mt-0.5 shrink-0" />
+                    <div key={todo.id} className="flex items-start gap-3 p-2.5 rounded-xl hover:bg-primary/[0.04] transition-colors">
+                      <Circle className="w-4 h-4 text-muted-foreground/40 mt-0.5 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-semibold text-slate-700 truncate">{todo.title}</p>
+                        <p className="text-sm font-semibold text-foreground/80 truncate">{todo.title}</p>
                         {todo.priority && (
                           <Badge className={cn(
                             "mt-1",
                             todo.priority === "high" ? "bg-rose-100 text-rose-700 border-rose-200" :
                             todo.priority === "medium" ? "bg-amber-100 text-amber-700 border-amber-200" :
-                            "bg-slate-100 text-slate-600 border-slate-200"
+                            "bg-muted text-muted-foreground border-border"
                           )}>
                             {todo.priority}
                           </Badge>
@@ -366,13 +366,13 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-          </Card>
+          </div>
 
           {/* Follow-ups Due */}
-          <Card className="animate-fade-in-scale stagger-7">
+          <div className="glass-card rounded-2xl animate-fade-in-scale stagger-7">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-violet-50">
+                <div className="p-2 rounded-xl bg-violet-500/10">
                   <PhoneCall className="w-4 h-4 text-violet-600" />
                 </div>
                 <h2 className="font-display font-bold text-lg">Follow-ups Due</h2>
@@ -383,31 +383,31 @@ export default function Dashboard() {
             </div>
             <div className="px-5 pb-5">
               {pendingFollowups.length === 0 ? (
-                <div className="text-center py-6 text-slate-400">
+                <div className="text-center py-6 text-muted-foreground/60">
                   <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-200" />
                   <p className="text-sm font-medium">No follow-ups pending</p>
                 </div>
               ) : (
                 <div className="space-y-2">
                   {pendingFollowups.map((f: Followup) => (
-                    <div key={f.id} className="flex items-start gap-3 p-3 bg-violet-50/50 rounded-xl border border-violet-100/60">
+                    <div key={f.id} className="flex items-start gap-3 p-3 bg-violet-500/100/5 rounded-xl border border-violet-500/10">
                       <AlertCircle className="w-4 h-4 text-violet-500 mt-0.5 shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="text-sm font-bold text-slate-800 truncate">{f.clientName}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">{(f as any).contactMethod} · Due {formatDate(f.dueDate)}</p>
+                        <p className="text-sm font-bold text-foreground truncate">{f.clientName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{(f as any).contactMethod} · Due {formatDate(f.dueDate)}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Center Column: Recent Bookings + Financials */}
         <div className="xl:col-span-4 space-y-6">
           {/* Recent Bookings */}
-          <Card className="animate-fade-in-scale stagger-5">
+          <div className="glass-card rounded-2xl animate-fade-in-scale stagger-5">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 rounded-xl bg-primary/10">
@@ -421,8 +421,8 @@ export default function Dashboard() {
             </div>
             <div className="px-5 pb-5 space-y-3">
               {!stats?.recentBookings?.length ? (
-                <div className="text-center py-8 text-slate-400">
-                  <CalendarDays className="w-10 h-10 mx-auto mb-2 text-slate-200" />
+                <div className="text-center py-8 text-muted-foreground/60">
+                  <CalendarDays className="w-10 h-10 mx-auto mb-2 text-muted-foreground/30" />
                   <p className="text-sm font-medium">No work orders yet</p>
                   <button onClick={() => navigate("/bookings")} className="text-xs text-primary font-bold mt-2 hover:underline">
                     Create first work order
@@ -430,18 +430,18 @@ export default function Dashboard() {
                 </div>
               ) : (
                 stats.recentBookings.map((booking) => (
-                  <div key={booking.id} className="group p-4 rounded-2xl bg-slate-50/80 hover:bg-white hover:shadow-md border border-transparent hover:border-border/60 transition-all duration-300">
+                  <div key={booking.id} className="group p-4 rounded-2xl bg-background/60 hover:bg-white/80 hover:shadow-lg border border-white/40 hover:border-primary/10 transition-all duration-300">
                     <div className="flex justify-between items-start mb-2">
                       <div className="min-w-0 flex-1">
-                        <h4 className="font-bold text-slate-900 truncate">{booking.clientName || "Walk-in Customer"}</h4>
+                        <h4 className="font-bold text-foreground truncate">{booking.clientName || "Walk-in Customer"}</h4>
                         <div className="flex items-center gap-2 mt-1">
                           <Star className="w-3 h-3 text-amber-400" />
-                          <span className="text-xs font-medium text-slate-500">{booking.serviceType}</span>
+                          <span className="text-xs font-medium text-muted-foreground">{booking.serviceType}</span>
                         </div>
                       </div>
                       <Badge className={cn("shrink-0 ml-2", getStatusColor(booking.status))}>{booking.status}</Badge>
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-slate-500 mt-3 pt-3 border-t border-slate-100">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground mt-3 pt-3 border-t border-border/50">
                       <span className="flex items-center gap-1">
                         <CalendarDays className="w-3 h-3" />
                         {formatDate(booking.date)}
@@ -466,13 +466,13 @@ export default function Dashboard() {
                 ))
               )}
             </div>
-          </Card>
+          </div>
 
           {/* Enhanced Financial Dashboard */}
-          <Card className="animate-fade-in-scale stagger-6">
+          <div className="glass-card rounded-2xl animate-fade-in-scale stagger-6">
             <div className="px-5 pt-5 pb-3 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-emerald-50">
+                <div className="p-2 rounded-xl bg-emerald-500/10">
                   <DollarSign className="w-4 h-4 text-emerald-600" />
                 </div>
                 <h2 className="font-display font-bold text-lg">Financial Dashboard</h2>
@@ -484,7 +484,7 @@ export default function Dashboard() {
             <div className="px-5 pb-5 space-y-4">
               {/* P&L Cards */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-100">
+                <div className="p-3.5 rounded-2xl bg-emerald-500/10 border border-emerald-100">
                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-wider">This Month Revenue</p>
                   <p className="text-xl font-black text-emerald-700 mt-0.5">{formatCurrency(financial?.thisMonth?.revenue || stats?.totalRevenue || "0")}</p>
                   {financial?.revenueGrowth && parseFloat(financial.revenueGrowth) !== 0 && (
@@ -493,7 +493,7 @@ export default function Dashboard() {
                     </p>
                   )}
                 </div>
-                <div className="p-3.5 rounded-2xl bg-rose-50 border border-rose-100">
+                <div className="p-3.5 rounded-2xl bg-rose-500/5 border border-rose-500/10">
                   <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wider">Expenses + Labor</p>
                   <p className="text-xl font-black text-rose-700 mt-0.5">{formatCurrency(parseFloat(financial?.thisMonth?.expenses || "0") + parseFloat(financial?.thisMonth?.labor || "0"))}</p>
                 </div>
@@ -508,7 +508,7 @@ export default function Dashboard() {
                   </div>
                   <p className="text-xl font-black text-primary mt-0.5">{formatCurrency(financial?.thisMonth?.profit || (parseFloat(stats?.totalRevenue || "0") - recentExpenseTotal))}</p>
                 </div>
-                <div className="p-3.5 rounded-2xl bg-purple-50 border border-purple-100">
+                <div className="p-3.5 rounded-2xl bg-purple-500/5 border border-purple-500/10">
                   <p className="text-[10px] font-bold text-purple-600 uppercase tracking-wider">Recurring MRR</p>
                   <p className="text-xl font-black text-purple-700 mt-0.5">{formatCurrency(financial?.mrr || "0")}</p>
                   {financial?.activeSubscriptions > 0 && <p className="text-[10px] text-purple-500 font-medium mt-0.5">{financial.activeSubscriptions} active subscriptions</p>}
@@ -517,22 +517,22 @@ export default function Dashboard() {
 
               {/* AR + GET Tax */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="p-3 rounded-xl bg-amber-50 border border-amber-100">
+                <div className="p-3 rounded-xl bg-amber-500/5 border border-amber-500/10">
                   <p className="text-[10px] font-bold text-amber-600 uppercase">Receivable</p>
                   <p className="text-base font-black text-amber-700">{formatCurrency(financial?.accountsReceivable?.total || "0")}</p>
                   <p className="text-[10px] text-amber-500">{financial?.accountsReceivable?.count || 0} unpaid</p>
                 </div>
-                <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                  <p className="text-[10px] font-bold text-slate-600 uppercase">GET Tax Owed</p>
-                  <p className="text-base font-black text-slate-700">{formatCurrency(financial?.getOwed || "0")}</p>
-                  <p className="text-[10px] text-slate-400">Hawaii GET 4.712%</p>
+                <div className="p-3 rounded-xl bg-slate-50 border border-border">
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">GET Tax Owed</p>
+                  <p className="text-base font-black text-foreground/80">{formatCurrency(financial?.getOwed || "0")}</p>
+                  <p className="text-[10px] text-muted-foreground/60">Hawaii GET 4.712%</p>
                 </div>
               </div>
 
               {/* Revenue Chart */}
               {financial?.monthlyRevenue?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Revenue Trend (6 months)</p>
+                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-2">Revenue Trend (6 months)</p>
                   <div className="h-32">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={(() => {
@@ -541,11 +541,11 @@ export default function Dashboard() {
                         const months = new Set([...Object.keys(revMap), ...Object.keys(expMap)]);
                         return Array.from(months).sort().map(m => ({ month: m.slice(5), revenue: revMap[m] || 0, expenses: expMap[m] || 0 }));
                       })()}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220 14% 94%)" />
                         <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} />
                         <YAxis tick={{ fontSize: 10, fill: "#94a3b8" }} width={40} />
-                        <Tooltip formatter={(v: number) => "$" + v.toFixed(2)} contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid #e2e8f0" }} />
-                        <Bar dataKey="revenue" fill="#003087" radius={[4, 4, 0, 0]} />
+                        <Tooltip formatter={(v: number) => "$" + v.toFixed(2)} contentStyle={{ borderRadius: 12, fontSize: 12, border: "1px solid hsl(220 13% 91%)", background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)" }} />
+                        <Bar dataKey="revenue" fill="#4338ca" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="expenses" fill="#f43f5e" radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -556,11 +556,11 @@ export default function Dashboard() {
               {/* Top Clients */}
               {financial?.topClients?.length > 0 && (
                 <div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Top Clients</p>
+                  <p className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-wider mb-2">Top Clients</p>
                   <div className="space-y-1.5">
                     {financial.topClients.slice(0, 3).map((c: any, i: number) => (
                       <div key={i} className="flex items-center justify-between text-sm">
-                        <span className="text-slate-700 font-medium truncate">{c.client_name}</span>
+                        <span className="text-foreground/80 font-medium truncate">{c.client_name}</span>
                         <span className="text-emerald-600 font-bold shrink-0 ml-2">{formatCurrency(c.total)}</span>
                       </div>
                     ))}
@@ -568,25 +568,25 @@ export default function Dashboard() {
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         </div>
 
         {/* Right Column: Business Checklist */}
         <div className="xl:col-span-3 space-y-6">
-          <Card className="animate-fade-in-scale stagger-7">
+          <div className="glass-card rounded-2xl animate-fade-in-scale stagger-7">
             <div className="px-5 pt-5 pb-4">
               <div className="flex items-center gap-3 mb-4">
                 <ProgressRing percent={checklistProgress} />
                 <div>
                   <h2 className="font-display font-bold text-lg leading-tight">Startup Checklist</h2>
-                  <p className="text-xs text-slate-500 font-medium mt-0.5">
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">
                     {checklist?.filter((i) => i.completed).length || 0} of {checklist?.length || 0} complete
                   </p>
                 </div>
               </div>
 
               {checklistProgress === 100 && (
-                <div className="mb-4 p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+                <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-200 text-center">
                   <Sparkles className="w-5 h-5 text-emerald-500 mx-auto mb-1" />
                   <p className="text-sm font-bold text-emerald-700">All done! You're ready to go.</p>
                 </div>
@@ -606,25 +606,25 @@ export default function Dashboard() {
                         onClick={() => setExpandedCategory(isExpanded ? null : category)}
                         className={cn(
                           "w-full flex items-center gap-3 p-3 text-left transition-colors rounded-xl",
-                          isExpanded ? "bg-primary/5" : "hover:bg-slate-50"
+                          isExpanded ? "bg-primary/[0.04]" : "hover:bg-primary/[0.04]"
                         )}
                       >
                         <div className={cn(
                           "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0",
-                          allDone ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500"
+                          allDone ? "bg-emerald-100 text-emerald-600" : "bg-muted text-muted-foreground"
                         )}>
                           {allDone ? <CheckCircle2 className="w-4 h-4" /> : `${percent}%`}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className={cn("text-sm font-bold truncate", allDone ? "text-emerald-600" : "text-slate-800")}>{category}</p>
-                          <div className="w-full bg-slate-100 rounded-full h-1 mt-1 overflow-hidden">
+                          <p className={cn("text-sm font-bold truncate", allDone ? "text-emerald-600" : "text-foreground")}>{category}</p>
+                          <div className="w-full bg-muted rounded-full h-1 mt-1 overflow-hidden">
                             <div
-                              className={cn("h-1 rounded-full animate-progress-fill", allDone ? "bg-emerald-500" : "bg-primary")}
+                              className={cn("h-1 rounded-full animate-progress-fill", allDone ? "bg-emerald-500/100" : "bg-primary")}
                               style={{ width: `${percent}%` }}
                             />
                           </div>
                         </div>
-                        <ChevronDown className={cn("w-4 h-4 text-slate-400 shrink-0 transition-transform", isExpanded && "rotate-180")} />
+                        <ChevronDown className={cn("w-4 h-4 text-muted-foreground/60 shrink-0 transition-transform", isExpanded && "rotate-180")} />
                       </button>
 
                       {isExpanded && (
@@ -633,19 +633,19 @@ export default function Dashboard() {
                             <button
                               key={item.id}
                               onClick={() => handleToggleChecklist(item.id, item.completed)}
-                              className="w-full flex items-start gap-2.5 p-2 rounded-lg hover:bg-slate-50 text-left transition-colors group disabled:opacity-50"
+                              className="w-full flex items-start gap-2.5 p-2 rounded-lg hover:bg-primary/[0.04] text-left transition-colors group disabled:opacity-50"
                               disabled={updateChecklist.isPending}
                             >
                               <div className="shrink-0 mt-0.5 transition-transform group-hover:scale-110">
                                 {item.completed ? (
                                   <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                                 ) : (
-                                  <Circle className="w-4 h-4 text-slate-300 group-hover:text-primary/50" />
+                                  <Circle className="w-4 h-4 text-muted-foreground/40 group-hover:text-primary/50" />
                                 )}
                               </div>
                               <p className={cn(
                                 "text-xs font-medium leading-snug",
-                                item.completed ? "text-slate-400 line-through" : "text-slate-600"
+                                item.completed ? "text-muted-foreground/60 line-through" : "text-muted-foreground"
                               )}>
                                 {item.title}
                               </p>
@@ -658,7 +658,7 @@ export default function Dashboard() {
                 })}
               </div>
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </div>
