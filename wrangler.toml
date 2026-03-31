@@ -13,6 +13,10 @@ binding = "DB"
 database_name = "proflowplumbing-db"
 database_id = "09e30cb1-2e25-4996-803a-d2c8a93444d6"
 
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "proflowplumbing-uploads"
+
 [[routes]]
 pattern = "proplumbing.techsavvyhawaii.com"
 zone_name = "techsavvyhawaii.com"
