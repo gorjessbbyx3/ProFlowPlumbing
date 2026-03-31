@@ -1,7 +1,7 @@
 {
-  "name": "Plumbing CRM",
-  "short_name": "Plumbing CRM",
-  "description": "CRM dashboard for plumbing businesses",
+  "name": "ProFlow Plumbing",
+  "short_name": "ProFlow",
+  "description": "ProFlow Plumbing CRM dashboard",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

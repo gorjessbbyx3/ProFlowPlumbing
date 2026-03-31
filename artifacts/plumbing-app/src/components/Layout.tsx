@@ -77,7 +77,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
                   <Droplets className="w-4 h-4 text-white" />
                 </div>
-                <span className="font-display font-bold text-white text-base">Plumbing CRM</span>
+                <span className="font-display font-bold text-white text-base">ProFlow Plumbing</span>
               </div>
               <button
                 onClick={() => setMobileMenuOpen(false)}
@@ -137,7 +137,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <Droplets className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-display font-bold text-white leading-none text-[15px] tracking-tight">Plumbing CRM</h1>
+            <h1 className="font-display font-bold text-white leading-none text-[15px] tracking-tight">ProFlow Plumbing</h1>
             <p className="text-[11px] font-medium text-white/30 mt-0.5 tracking-wide">Dashboard</p>
           </div>
         </div>
@@ -195,7 +195,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <Droplets className="w-3.5 h-3.5 text-white" />
             </div>
-            <span className="font-display font-bold text-foreground text-sm">Plumbing CRM</span>
+            <span className="font-display font-bold text-foreground text-sm">ProFlow Plumbing</span>
           </div>
           <div className="flex items-center gap-1">
             <NotificationBell />

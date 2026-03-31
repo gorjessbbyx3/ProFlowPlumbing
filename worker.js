@@ -43,7 +43,7 @@ export default {
           const statusColor = inv.status === "paid" ? "#22c55e" : inv.status === "overdue" ? "#ef4444" : "#f59e0b";
           const statusLabel = inv.status.charAt(0).toUpperCase() + inv.status.slice(1);
           const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Invoice ${inv.invoice_number} — Plumbing CRM</title>
+<title>Invoice ${inv.invoice_number} — ProFlow Plumbing</title>
 <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:-apple-system,system-ui,sans-serif;background:#f1f5f9;padding:20px;color:#1e293b}
 .card{max-width:600px;margin:0 auto;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.08)}
 .header{background:#4338ca;color:#fff;padding:28px 24px;text-align:center}
@@ -57,7 +57,7 @@ export default {
 .pay-btn{display:block;width:100%;padding:16px;background:#4338ca;color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px;text-align:center}
 .pay-btn:hover{opacity:.9}</style></head><body>
 <div class="card">
-<div class="header"><h1>Plumbing CRM</h1><p>Professional Plumbing Services</p><span class="badge">${statusLabel}</span></div>
+<div class="header"><h1>ProFlow Plumbing</h1><p>Professional Plumbing Services</p><span class="badge">${statusLabel}</span></div>
 <div class="body">
 <div class="row"><span class="label">Invoice</span><span class="value">${inv.invoice_number}</span></div>
 ${inv.client_name ? `<div class="row"><span class="label">Client</span><span class="value">${inv.client_name}</span></div>` : ""}
@@ -68,11 +68,23 @@ ${inv.due_date ? `<div class="row"><span class="label">Due Date</span><span clas
 <div class="total-row"><span class="label">Total Due</span><span class="value">$${parseFloat(inv.total).toFixed(2)}</span></div>
 </div>
 <div style="padding:0 24px 24px"><p style="text-align:center;font-size:13px;color:#64748b;margin-top:16px">Payment accepted via Cash, Zelle, Venmo, or Card</p></div>
-<div class="footer">Plumbing CRM · info@plumbingcrm.app</div>
+<div class="footer">ProFlow Plumbing · info@techsavvyhawaii.com</div>
 </div></body></html>`;
           return new Response(html, { status: 200, headers: { "Content-Type": "text/html;charset=UTF-8", ...CORS } });
         }
       }
+    }
+
+    // Serve R2 uploads
+    if (url.pathname.startsWith("/files/")) {
+      const key = url.pathname.slice("/files/".length);
+      if (!key) return err("Not found", 404);
+      const obj = await env.R2.get(key);
+      if (!obj) return err("Not found", 404);
+      const headers = new Headers();
+      obj.writeHttpMetadata(headers);
+      headers.set("Cache-Control", "public, max-age=31536000, immutable");
+      return new Response(obj.body, { headers });
     }
 
     if (!url.pathname.startsWith("/api/")) return env.ASSETS.fetch(request);
@@ -81,13 +93,6 @@ ${inv.due_date ? `<div class="row"><span class="label">Due Date</span><span clas
     const path = url.pathname.replace("/api", "");
     const method = request.method;
     const db = env.DB;
-
-    // Seed checklist on first request if empty
-    if (path === "/checklist" && method === "GET") {
-      const { results } = await db.prepare("SELECT COUNT(*) as c FROM checklist_items").first() ? 
-        { results: [await db.prepare("SELECT COUNT(*) as c FROM checklist_items").first()] } :
-        { results: [{ c: 0 }] };
-    }
 
     let body = null;
     const contentType = request.headers.get("content-type") || "";
@@ -103,7 +108,7 @@ ${inv.due_date ? `<div class="row"><span class="label">Due Date</span><span clas
     try {
       const match = matchRoute(method, path, routes);
       if (!match) return err("Not found", 404);
-      return await match.handler({ db, params: match.params, body, query, request });
+      return await match.handler({ db, params: match.params, body, query, request, env });
     } catch (e) {
       console.error(e);
       return err("Internal server error: " + e.message, 500);
@@ -295,24 +300,24 @@ const routes = [
     if (!file || !(file instanceof File)) return err("No photo uploaded");
     if (!photoType || !["before", "after"].includes(photoType)) return err("type must be before or after");
 
-    // Convert file to base64 data URI for storage (no filesystem on Workers)
     const buffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-    const mimeType = file.type || "image/jpeg";
-    const dataUri = `data:${mimeType};base64,${base64}`;
+    const key = await uploadToR2(env.R2, buffer, file.type || "image/jpeg", "photos");
 
     const info = await db.prepare(
       "INSERT INTO booking_photos (booking_id, type, file_path, caption, created_at) VALUES (?, ?, ?, ?, ?)"
-    ).bind(bookingId, photoType, dataUri, caption, now()).run();
+    ).bind(bookingId, photoType, key, caption, now()).run();
     const row = await db.prepare("SELECT * FROM booking_photos WHERE id = ?").bind(info.meta.last_row_id).first();
     return json(camelRow(row), 201);
   }},
-  { method: "DELETE", path: "/bookings/:id/photos/:photoId", handler: async ({ db, params }) => {
+  { method: "DELETE", path: "/bookings/:id/photos/:photoId", handler: async ({ db, params, env }) => {
     const bookingId = Number(params.id);
     const photoId = Number(params.photoId);
     if (isNaN(bookingId) || isNaN(photoId)) return err("Invalid ID");
-    const row = await db.prepare("SELECT id FROM booking_photos WHERE id = ? AND booking_id = ?").bind(photoId, bookingId).first();
+    const row = await db.prepare("SELECT id, file_path FROM booking_photos WHERE id = ? AND booking_id = ?").bind(photoId, bookingId).first();
     if (!row) return err("Photo not found", 404);
+    if (row.file_path && !row.file_path.startsWith("data:")) {
+      await env.R2.delete(row.file_path).catch(() => {});
+    }
     await db.prepare("DELETE FROM booking_photos WHERE id = ?").bind(photoId).run();
     return noContent();
   }},
@@ -420,7 +425,7 @@ const routes = [
     const { results } = await db.prepare(sql).bind(...vals).all();
     return json(results.map(camelRow));
   }},
-  { method: "POST", path: "/expenses", handler: async ({ db, body, request }) => {
+  { method: "POST", path: "/expenses", handler: async ({ db, body, request, env }) => {
     // Handle both JSON and FormData
     const contentType = request.headers.get("content-type") || "";
     let d, receiptImage = null;
@@ -430,8 +435,7 @@ const routes = [
       const file = fd.get("receiptImage");
       if (file && file instanceof File && file.size > 0) {
         const buffer = await file.arrayBuffer();
-        const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-        receiptImage = `data:${file.type || "image/jpeg"};base64,${base64}`;
+        receiptImage = await uploadToR2(env.R2, buffer, file.type || "image/jpeg", "receipts");
       }
     } else {
       d = sc(body);
@@ -443,7 +447,7 @@ const routes = [
     return json(camelRow(row), 201);
   }},
   { method: "GET", path: "/expenses/:id", handler: async ({ db, params }) => { const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(params.id).first(); return row ? json(camelRow(row)) : err("Not found", 404); }},
-  { method: "PATCH", path: "/expenses/:id", handler: async ({ db, params, body, request }) => {
+  { method: "PATCH", path: "/expenses/:id", handler: async ({ db, params, body, request, env }) => {
     const contentType = request.headers.get("content-type") || "";
     let d;
     if (contentType.includes("multipart/form-data")) {
@@ -452,8 +456,7 @@ const routes = [
       for (const [k, v] of fd.entries()) {
         if (k === "receiptImage" && v instanceof File && v.size > 0) {
           const buffer = await v.arrayBuffer();
-          const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-          d.receipt_image = `data:${v.type || "image/jpeg"};base64,${base64}`;
+          d.receipt_image = await uploadToR2(env.R2, buffer, v.type || "image/jpeg", "receipts");
         } else if (k !== "receiptImage") {
           d[k.replace(/[A-Z]/g, l => "_" + l.toLowerCase())] = v;
         }
@@ -467,7 +470,7 @@ const routes = [
     const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(params.id).first();
     return row ? json(camelRow(row)) : err("Not found", 404);
   }},
-  { method: "POST", path: "/expenses/:id/receipt", handler: async ({ db, params, request }) => {
+  { method: "POST", path: "/expenses/:id/receipt", handler: async ({ db, params, request, env }) => {
     const id = Number(params.id);
     if (isNaN(id)) return err("Invalid ID");
     const existing = await db.prepare("SELECT id FROM expenses WHERE id = ?").bind(id).first();
@@ -476,9 +479,8 @@ const routes = [
     const file = fd.get("receiptImage");
     if (!file || !(file instanceof File) || file.size === 0) return err("No image uploaded");
     const buffer = await file.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
-    const dataUri = `data:${file.type || "image/jpeg"};base64,${base64}`;
-    await db.prepare("UPDATE expenses SET receipt_image = ?, updated_at = datetime('now') WHERE id = ?").bind(dataUri, id).run();
+    const key = await uploadToR2(env.R2, buffer, file.type || "image/jpeg", "receipts");
+    await db.prepare("UPDATE expenses SET receipt_image = ?, updated_at = datetime('now') WHERE id = ?").bind(key, id).run();
     const row = await db.prepare("SELECT * FROM expenses WHERE id = ?").bind(id).first();
     return json(camelRow(row));
   }},
@@ -1085,6 +1087,14 @@ const routes = [
   }},
   { method: "DELETE", path: "/membership-plans/:id", handler: async ({ db, params }) => crudDelete(db, "membership_plans", params.id) },
 ];
+
+// Upload a file buffer to R2, returns the stored key
+async function uploadToR2(r2, buffer, mimeType, prefix) {
+  const ext = (mimeType.split("/")[1] || "jpg").replace("jpeg", "jpg");
+  const key = `${prefix}/${Date.now()}-${crypto.randomUUID().slice(0, 8)}.${ext}`;
+  await r2.put(key, buffer, { httpMetadata: { contentType: mimeType } });
+  return key;
+}
 
 // Convert snake_case DB rows to camelCase for the frontend
 function camelRow(row) {
