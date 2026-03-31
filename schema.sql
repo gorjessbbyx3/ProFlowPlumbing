@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   date TEXT NOT NULL,
   vendor TEXT,
   notes TEXT,
+  receipt_image TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
