@@ -1086,6 +1086,110 @@ const routes = [
     return json(c);
   }},
   { method: "DELETE", path: "/membership-plans/:id", handler: async ({ db, params }) => crudDelete(db, "membership_plans", params.id) },
+
+  // ── Email Sending (via Resend) ──────────────────────────────────
+  // Generic send — used by compose, replies, any custom email
+  { method: "POST", path: "/email/send", handler: async ({ body, env }) => {
+    const apiKey = env.RESEND_API_KEY;
+    if (!apiKey) return err("Email not configured — RESEND_API_KEY missing", 500);
+    const { to, subject, html, text, replyTo } = body || {};
+    if (!to || !subject || !html) return err("to, subject, and html are required");
+    const fromEmail = "plumbingpro@techsavvyhawaii.com";
+    const fromName = "ProFlow Plumbing";
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ from: `${fromName} <${fromEmail}>`, to: Array.isArray(to) ? to : [to], subject, html, text: text || undefined, reply_to: replyTo || fromEmail }),
+    });
+    if (!res.ok) { const t = await res.text(); console.error("Resend error:", t); return err("Failed to send email", 500); }
+    const data = await res.json();
+    return json({ success: true, messageId: data.id });
+  }},
+
+  // Invoice email — sends a styled invoice to the client
+  { method: "POST", path: "/email/send-invoice", handler: async ({ db, body, env }) => {
+    const apiKey = env.RESEND_API_KEY;
+    if (!apiKey) return err("Email not configured", 500);
+    const { invoiceId, to, message } = body || {};
+    if (!invoiceId) return err("invoiceId required");
+    const inv = await db.prepare("SELECT * FROM invoices WHERE id = ?").bind(invoiceId).first();
+    if (!inv) return err("Invoice not found", 404);
+    const clientEmail = to || (inv.client_id ? (await db.prepare("SELECT email FROM clients WHERE id = ?").bind(inv.client_id).first())?.email : null);
+    if (!clientEmail) return err("No recipient email — provide 'to' or ensure client has email");
+    const clientName = inv.client_name || "Valued Customer";
+    const publicUrl = inv.public_token ? `https://proflowplumbing.gorjess.co/invoice/${inv.public_token}` : null;
+    const personalMsg = message ? `<p style="font-size:15px;color:#475569;line-height:1.6;margin-bottom:16px">${message}</p>` : "";
+    const viewBtn = publicUrl ? `<div style="text-align:center;margin:24px 0"><a href="${publicUrl}" style="display:inline-block;background:#4338ca;color:#fff;font-size:16px;font-weight:700;text-decoration:none;padding:14px 40px;border-radius:8px">View Invoice</a></div>` : "";
+    const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,system-ui,sans-serif"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;margin-top:20px"><div style="background:#4338ca;color:#fff;padding:28px 24px;text-align:center"><h1 style="margin:0;font-size:22px">ProFlow Plumbing</h1><p style="opacity:.8;margin-top:4px;font-size:13px">Invoice ${inv.invoice_number}</p></div><div style="padding:28px 24px"><p style="font-size:16px;color:#1e293b;line-height:1.6">Hi ${clientName},</p>${personalMsg}<table style="width:100%;border-collapse:collapse;margin:16px 0"><tr><td style="padding:8px 0;color:#64748b;font-size:14px">Invoice #</td><td style="padding:8px 0;text-align:right;font-weight:600">${inv.invoice_number}</td></tr><tr><td style="padding:8px 0;color:#64748b;font-size:14px">Amount</td><td style="padding:8px 0;text-align:right;font-weight:600;font-size:18px;color:#4338ca">$${parseFloat(inv.total || 0).toFixed(2)}</td></tr><tr><td style="padding:8px 0;color:#64748b;font-size:14px">Due Date</td><td style="padding:8px 0;text-align:right;font-weight:600">${inv.due_date || "Upon receipt"}</td></tr><tr><td style="padding:8px 0;color:#64748b;font-size:14px">Status</td><td style="padding:8px 0;text-align:right;font-weight:600">${(inv.status || "unpaid").charAt(0).toUpperCase() + (inv.status || "unpaid").slice(1)}</td></tr></table>${viewBtn}<p style="font-size:14px;color:#64748b;line-height:1.6">If you have any questions about this invoice, just reply to this email.</p></div><div style="padding:16px 24px;border-top:1px solid #e2e8f0;text-align:center"><p style="font-size:12px;color:#94a3b8;margin:0">ProFlow Plumbing · Honolulu, HI · (808) TBD</p></div></div></body></html>`;
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ from: "ProFlow Plumbing <plumbingpro@techsavvyhawaii.com>", to: [clientEmail], subject: `Invoice ${inv.invoice_number} from ProFlow Plumbing`, html, reply_to: "plumbingpro@techsavvyhawaii.com" }),
+    });
+    if (!res.ok) { const t = await res.text(); console.error("Resend error:", t); return err("Failed to send invoice email", 500); }
+    const data = await res.json();
+    return json({ success: true, messageId: data.id, sentTo: clientEmail });
+  }},
+
+  // Proposal email — sends a job proposal/estimate to prospect
+  { method: "POST", path: "/email/send-proposal", handler: async ({ db, body, env }) => {
+    const apiKey = env.RESEND_API_KEY;
+    if (!apiKey) return err("Email not configured", 500);
+    const { to, clientName, subject, description, estimatedCost, jobDate, message } = body || {};
+    if (!to || !clientName) return err("to and clientName required");
+    const personalMsg = message ? `<p style="font-size:15px;color:#475569;line-height:1.6">${message}</p>` : "";
+    const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,system-ui,sans-serif"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;margin-top:20px"><div style="background:#4338ca;color:#fff;padding:28px 24px;text-align:center"><h1 style="margin:0;font-size:22px">ProFlow Plumbing</h1><p style="opacity:.8;margin-top:4px;font-size:13px">Service Proposal</p></div><div style="padding:28px 24px"><p style="font-size:16px;color:#1e293b;line-height:1.6">Hi ${clientName},</p><p style="font-size:15px;color:#475569;line-height:1.6">Thank you for reaching out! Here's our proposal for the work discussed:</p>${personalMsg}<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:16px 0">${description ? `<p style="margin:0 0 8px;font-size:14px;color:#64748b">Service</p><p style="margin:0 0 16px;font-size:15px;font-weight:600;color:#1e293b">${description}</p>` : ""}${estimatedCost ? `<p style="margin:0 0 8px;font-size:14px;color:#64748b">Estimated Cost</p><p style="margin:0 0 16px;font-size:22px;font-weight:700;color:#4338ca">$${estimatedCost}</p>` : ""}${jobDate ? `<p style="margin:0 0 8px;font-size:14px;color:#64748b">Proposed Date</p><p style="margin:0;font-size:15px;font-weight:600;color:#1e293b">${jobDate}</p>` : ""}</div><p style="font-size:15px;color:#475569;line-height:1.6">To accept this proposal, simply reply to this email or give us a call. We look forward to working with you!</p></div><div style="padding:16px 24px;border-top:1px solid #e2e8f0;text-align:center"><p style="font-size:12px;color:#94a3b8;margin:0">ProFlow Plumbing · Honolulu, HI</p></div></div></body></html>`;
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ from: "ProFlow Plumbing <plumbingpro@techsavvyhawaii.com>", to: [to], subject: subject || `Service Proposal from ProFlow Plumbing`, html, reply_to: "plumbingpro@techsavvyhawaii.com" }),
+    });
+    if (!res.ok) { const t = await res.text(); console.error("Resend error:", t); return err("Failed to send proposal", 500); }
+    const data = await res.json();
+    return json({ success: true, messageId: data.id, sentTo: to });
+  }},
+
+  // Booking confirmation / "On the way" notification
+  { method: "POST", path: "/email/send-notification", handler: async ({ db, body, env }) => {
+    const apiKey = env.RESEND_API_KEY;
+    if (!apiKey) return err("Email not configured", 500);
+    const { to, clientName, type, bookingDate, bookingTime, technicianName, estimatedArrival, jobDescription, message } = body || {};
+    if (!to || !clientName || !type) return err("to, clientName, and type required");
+    const templates = {
+      "booking-confirmation": {
+        subject: "Booking Confirmed — ProFlow Plumbing",
+        heading: "Booking Confirmed! ✅",
+        body: `<p style="font-size:15px;color:#475569;line-height:1.6">Your service appointment has been scheduled:</p><div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:20px;margin:16px 0">${bookingDate ? `<p style="margin:0 0 8px"><strong>Date:</strong> ${bookingDate}</p>` : ""}${bookingTime ? `<p style="margin:0 0 8px"><strong>Time:</strong> ${bookingTime}</p>` : ""}${technicianName ? `<p style="margin:0 0 8px"><strong>Technician:</strong> ${technicianName}</p>` : ""}${jobDescription ? `<p style="margin:0"><strong>Service:</strong> ${jobDescription}</p>` : ""}</div><p style="font-size:15px;color:#475569;line-height:1.6">We'll send you a reminder before your appointment. If you need to reschedule, just reply to this email.</p>`,
+      },
+      "on-the-way": {
+        subject: "Your Plumber is On the Way! 🚐",
+        heading: "We're On Our Way! 🚐",
+        body: `<p style="font-size:15px;color:#475569;line-height:1.6">Good news — your plumber is heading to you now!</p><div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:20px;margin:16px 0">${technicianName ? `<p style="margin:0 0 8px"><strong>Technician:</strong> ${technicianName}</p>` : ""}${estimatedArrival ? `<p style="margin:0 0 8px"><strong>Estimated Arrival:</strong> ${estimatedArrival}</p>` : ""}${jobDescription ? `<p style="margin:0"><strong>Service:</strong> ${jobDescription}</p>` : ""}</div><p style="font-size:15px;color:#475569;line-height:1.6">Please make sure the work area is accessible. See you soon!</p>`,
+      },
+      "job-complete": {
+        subject: "Service Complete — ProFlow Plumbing",
+        heading: "Job Complete! 🎉",
+        body: `<p style="font-size:15px;color:#475569;line-height:1.6">We've completed the work at your property.</p>${jobDescription ? `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:20px;margin:16px 0"><p style="margin:0"><strong>Service performed:</strong> ${jobDescription}</p></div>` : ""}<p style="font-size:15px;color:#475569;line-height:1.6">If you have any questions or concerns about the work, please don't hesitate to reach out. We'd also really appreciate a review if you're happy with our service!</p>`,
+      },
+      "reminder": {
+        subject: "Appointment Reminder — ProFlow Plumbing",
+        heading: "Appointment Reminder 📋",
+        body: `<p style="font-size:15px;color:#475569;line-height:1.6">Just a friendly reminder about your upcoming appointment:</p><div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:20px;margin:16px 0">${bookingDate ? `<p style="margin:0 0 8px"><strong>Date:</strong> ${bookingDate}</p>` : ""}${bookingTime ? `<p style="margin:0 0 8px"><strong>Time:</strong> ${bookingTime}</p>` : ""}${jobDescription ? `<p style="margin:0"><strong>Service:</strong> ${jobDescription}</p>` : ""}</div><p style="font-size:15px;color:#475569;line-height:1.6">Need to reschedule? Just reply to this email or call us.</p>`,
+      },
+    };
+    const tmpl = templates[type];
+    if (!tmpl) return err(`Unknown notification type: ${type}. Valid: ${Object.keys(templates).join(", ")}`);
+    const personalMsg = message ? `<p style="font-size:15px;color:#475569;line-height:1.6">${message}</p>` : "";
+    const html = `<!DOCTYPE html><html><body style="margin:0;padding:0;background:#f1f5f9;font-family:-apple-system,system-ui,sans-serif"><div style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;margin-top:20px"><div style="background:#4338ca;color:#fff;padding:28px 24px;text-align:center"><h1 style="margin:0;font-size:22px">ProFlow Plumbing</h1><p style="opacity:.8;margin-top:4px;font-size:13px">${tmpl.heading}</p></div><div style="padding:28px 24px"><p style="font-size:16px;color:#1e293b;line-height:1.6">Hi ${clientName},</p>${personalMsg}${tmpl.body}</div><div style="padding:16px 24px;border-top:1px solid #e2e8f0;text-align:center"><p style="font-size:12px;color:#94a3b8;margin:0">ProFlow Plumbing · Honolulu, HI</p></div></div></body></html>`;
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({ from: "ProFlow Plumbing <plumbingpro@techsavvyhawaii.com>", to: [to], subject: tmpl.subject, html, reply_to: "plumbingpro@techsavvyhawaii.com" }),
+    });
+    if (!res.ok) { const t = await res.text(); console.error("Resend error:", t); return err("Failed to send notification", 500); }
+    const data = await res.json();
+    return json({ success: true, messageId: data.id, sentTo: to, type });
+  }},
 ];
 
 // Upload a file buffer to R2, returns the stored key
